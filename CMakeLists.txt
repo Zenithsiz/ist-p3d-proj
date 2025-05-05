@@ -11,8 +11,8 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 # Binary
-file(GLOB_RECURSE sources_lib src/*.cpp)
+file(GLOB_RECURSE sources_lib DistributionRayTracer/*.cpp)
 add_executable("lab1" ${sources_lib} ${test_src})
-target_include_directories("lab1" PRIVATE "src/")
+target_include_directories("lab1" PRIVATE "DistributionRayTracer/")
 target_link_libraries("lab1" -lGL -lGLEW -lGLU -lglut -lIL)
 set_property(TARGET "lab1" PROPERTY CPP_STANDARD 23)
