@@ -376,11 +376,12 @@ int num_objects = scene->getNumObjects();
 			continue;
 		}
 
-		auto diffusive_color = hitObj->GetMaterial()->GetDiffColor() * hitObj->GetMaterial()->GetDiffuse() * max(N * l, 0.0);
+		const auto& mat = *hitObj->GetMaterial();
+
+		auto diffusive_color = mat.GetDiffColor() * mat.GetDiffuse() * max(N * l, 0.0);
 
 		auto h = (l + Eye).normalize();
-		auto v = (Eye - hitPoint).normalize();
-		auto specular_color = light.emission * hitObj->GetMaterial()->GetSpecular() * powf(max(h * v, 0.0), hitObj->GetMaterial()->GetShine());
+		auto specular_color = light.emission * mat.GetSpecular() * powf(max(h * N, 0.0), mat.GetShine());
 
 		color_Acc += diffusive_color + specular_color;
 	}
