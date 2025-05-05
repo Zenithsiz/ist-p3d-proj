@@ -390,7 +390,9 @@ int num_objects = scene->getNumObjects();
 	}
 
 	if (mat.GetReflection() > 0) {
-		auto reflected_dir = 2 * (ray.direction * N) * N - ray.direction;
+		Vector incident = -ray.direction;  // reverse the direction
+
+		auto reflected_dir = 2 * (incident * N) * N - incident;
 		auto reflected_color = rayTracing(Ray(hitPoint, reflected_dir), depth + 1, ior_1, lightSample);
 
 		auto reflected_coeff = mat.GetReflection();
