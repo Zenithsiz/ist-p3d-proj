@@ -351,6 +351,7 @@ int num_objects = scene->getNumObjects();
 	hitPoint = ray.origin + ray.direction * closestHit.t;
 	N = closestHit.normal;
 	hitPoint += N * EPSILON;
+	const auto& mat = *hitObj->GetMaterial();
 
 	//CALCULATE THE COLOR OF THE PIXEL
 	for (int i = 0; i < num_lights; i++) {
@@ -376,14 +377,25 @@ int num_objects = scene->getNumObjects();
 			continue;
 		}
 
-		const auto& mat = *hitObj->GetMaterial();
-
 		auto diffusive_color = mat.GetDiffColor() * mat.GetDiffuse() * max(N * l, 0.0);
 
 		auto h = (l - ray.direction).normalize();
 		auto specular_color = light.emission * mat.GetSpecular() * powf(max(h * N, 0.0), mat.GetShine());
 
 		color_Acc += diffusive_color + specular_color;
+	}
+
+	if (depth >= MAX_DEPTH) {
+		return color_Acc.clamp();
+	}
+
+	if (mat.GetReflection() > 0) {
+		auto reflected_dir = 2 * (ray.direction * N) * N - ray.direction;
+		auto reflected_color = rayTracing(Ray(hitPoint, reflected_dir), depth + 1, ior_1, lightSample);
+
+		auto reflected_coeff = mat.GetReflection();
+
+		color_Acc += reflected_color * reflected_coeff;
 	}
 
 	return color_Acc.clamp();
