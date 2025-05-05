@@ -380,7 +380,7 @@ int num_objects = scene->getNumObjects();
 
 		auto diffusive_color = mat.GetDiffColor() * mat.GetDiffuse() * max(N * l, 0.0);
 
-		auto h = (l + Eye).normalize();
+		auto h = (l - ray.direction).normalize();
 		auto specular_color = light.emission * mat.GetSpecular() * powf(max(h * N, 0.0), mat.GetShine());
 
 		color_Acc += diffusive_color + specular_color;
