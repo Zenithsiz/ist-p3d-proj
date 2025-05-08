@@ -171,7 +171,7 @@ HitRecord Sphere::hit(Ray& r) const
 
 AABB Sphere::GetBoundingBox() {
 	Vector a_min = this->center - Vector(this->radius, this->radius, this->radius);
-	Vector a_max = this->center + Vector(this->radius, this->radius, this->radius);
+	Vector a_max = this->center - Vector(this->radius, this->radius, this->radius);
 
 	return(AABB(a_min, a_max));
 }
@@ -194,8 +194,86 @@ HitRecord aaBox::hit(Ray& ray) const
 
 	float t0, t1; //entering and leaving points
 
-	//PUT HERE YOUR CODE
+	double ox = ray.origin.x;
+	double oy = ray.origin.y;
+	double oz = ray.origin.z;
+
+	double dx = ray.direction.x;
+	double dy = ray.direction.y;
+	double dz = ray.direction.z;
+
+	double tx_min, ty_min, tz_min;
+	double tx_max, ty_max, tz_max;
+
+	double a = 1.0 / dx;
+	if (a >= 0) {
+		tx_min = (min.x - ox) * a;
+		tx_max = (max.x - ox) * a;
+	} else {
+		tx_min = (max.x - ox) * a;
+		tx_max = (min.x - ox) * a;
+	}
+
+	double b = 1.0 / dy;
+	if (b >= 0) {
+		ty_min = (min.y - oy) * b;
+		ty_max = (max.y - oy) * b;
+	} else {
+		ty_min = (max.y - oy) * b;
+		ty_max = (min.y - oy) * b;
+	}
+
+	double c = 1.0 / dz;
+	if (c >= 0) {
+		tz_min = (min.z - oz) * b;
+		tz_max = (max.z - oz) * b;
+	} else {
+		tz_min = (max.z - oz) * b;
+		tz_max = (min.z - oz) * b;
+	}
+
+	float tE, tL; //entering and leaving t values
+	Vector face_in, face_out; // normals
+	// find largest tE, entering t value
+	if (tx_min > ty_min) {
+	tE = tx_min;
+	face_in = (a >= 0.0) ? Vector(-1, 0, 0) : Vector(1, 0, 0);
+	}
+	else {
+	tE = ty_min;
+	face_in = (b >= 0.0) ? Vector(0, -1, 0) : Vector(0, 1, 0);
+	}
+	if (tz_min > tE) {
+		tE = tz_min;
+		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
+	}
+	// find smallest tL, leaving t value
+	if (tx_max < ty_max) {
+		tL = tx_max;
+		face_out = (a >= 0.0) ? Vector(1, 0, 0) : Vector(-1, 0, 0);
+	}
+	else {
+		tL = ty_max;
+		face_out = (b >= 0.0) ? Vector(0, 1, 0) : Vector(0, -1, 0);
+	}
+	if (tz_max < tL) {
+		tL = tz_max;
+		face_out = (c >= 0.0) ? Vector(0, 0, 1) : Vector(0, 0, -1);
+	}
+	if (tE < tL && tL > 0) { // condition for a hit
+		rec.isHit = true;
+		if (tE > 0) {
+			rec.t = tE; // ray hits outside surface
+			rec.normal = face_in;
+		}
+		else {
+			rec.t = tL;// ray hits inside surface
+			rec.normal = face_out;
+		}
+
 		return (rec);
+	}
+	else return (rec); //initialized to false
 
 }
 
