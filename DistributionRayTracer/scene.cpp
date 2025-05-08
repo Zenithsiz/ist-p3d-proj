@@ -55,7 +55,35 @@ HitRecord Triangle::hit(Ray& r) const {
 	Vector normal = (points[1] - points[0]) % (points[2] - points[1]);  //cross product
 	normal.normalize();
 
-	//PUT HERE YOUR CODE
+	Vector edge1 = points[1] - points[0];
+	Vector edge2 = points[2] - points[0];
+	Vector ray_cross_e2 = r.direction % edge2;
+	float det = edge1 * ray_cross_e2;
+
+	if (det > -EPSILON && det < EPSILON)
+		return rec;
+
+	float inv_det = 1.0 / det;
+	Vector s = r.origin - points[0];
+	float u = inv_det * (s * ray_cross_e2);
+
+	if ((u < 0 && abs(u) > EPSILON) || (u > 1 && abs(u-1) > EPSILON))
+		return rec;
+
+	Vector s_cross_e1 = s % edge1;
+	float v = inv_det * r.direction * s_cross_e1;
+
+	if ((v < 0 && abs(v) > EPSILON) || (u + v > 1 && abs(u + v - 1) > EPSILON))
+		return rec;
+
+	// At this stage we can compute t to find out where the intersection point is on the line.
+	rec.t = inv_det * (edge2 * s_cross_e1);
+	rec.isHit = rec.t > EPSILON;
+
+	rec.normal = normal;
+	if (rec.normal * r.direction > 0) {
+		rec.normal = -rec.normal;
+	}
 
 	return (rec);
 }
