@@ -192,8 +192,6 @@ HitRecord aaBox::hit(Ray& ray) const
 	rec.t = FLT_MAX;
 	rec.isHit = false;
 
-	float t0, t1; //entering and leaving points
-
 	double ox = ray.origin.x;
 	double oy = ray.origin.y;
 	double oz = ray.origin.z;
@@ -225,11 +223,11 @@ HitRecord aaBox::hit(Ray& ray) const
 
 	double c = 1.0 / dz;
 	if (c >= 0) {
-		tz_min = (min.z - oz) * b;
-		tz_max = (max.z - oz) * b;
+		tz_min = (min.z - oz) * c;
+		tz_max = (max.z - oz) * c;
 	} else {
-		tz_min = (max.z - oz) * b;
-		tz_max = (min.z - oz) * b;
+		tz_min = (max.z - oz) * c;
+		tz_max = (min.z - oz) * c;
 	}
 
 	float tE, tL; //entering and leaving t values
