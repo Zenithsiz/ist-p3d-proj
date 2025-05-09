@@ -393,11 +393,19 @@ int num_objects = scene->getNumObjects();
 		Vector incident = -ray.direction;  // reverse the direction
 
 		auto reflected_dir = 2 * (incident * N) * N - incident;
-		auto reflected_color = rayTracing(Ray(hitPoint, reflected_dir), depth + 1, ior_1, lightSample);
+		auto reflected_color = rayTracing(Ray(hitPoint + EPSILON * N, reflected_dir), depth + 1, ior_1, lightSample);
 
 		auto reflected_coeff = mat.GetReflection();
 
-		color_Acc += reflected_color * reflected_coeff;
+		color_Acc += reflected_color * reflected_coeff * mat.GetSpecColor();
+	}
+
+	if (mat.GetTransmittance() == 1.0) {
+		// TODO: Fresnel + change K_s
+		auto transparent_dir = ray.direction;
+		auto reflected_color = rayTracing(Ray(hitPoint - EPSILON * N, transparent_dir), depth + 1, ior_1, lightSample);
+
+		color_Acc += reflected_color;
 	}
 
 	return color_Acc.clamp();
@@ -783,7 +791,7 @@ void init(int argc, char* argv[])
 void init_scene(void)
 {
 	char scenes_dir[70] = "P3D_Scenes/";
-	char input_user[50] = "balls_low.p3f";
+	char input_user[50] = "teste.p3f";
 	char scene_name[70];
 
 	scene = new Scene();
