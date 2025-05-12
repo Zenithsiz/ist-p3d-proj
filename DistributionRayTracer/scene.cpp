@@ -146,20 +146,25 @@ HitRecord Sphere::hit(Ray& r) const
 
 	auto offset = r.origin - this->center;
 
-	auto ray_center_offset = offset * r.direction;
-	auto distance_from_surface = offset * offset - this->radius * this->radius;
+	auto b = offset * r.direction;
+	auto c = offset * offset - this->radius * this->radius;
 
-	if (distance_from_surface > 0.0 && ray_center_offset > 0.0) {
+	auto is_outside = c > 0.0;
+
+	if (is_outside && b > 0.0) {
 		return rec;
 	}
 
-	auto disc = ray_center_offset*ray_center_offset - distance_from_surface;
-
+	auto disc = b*b - c;
 	if (disc < 0.0) {
 		return rec;
 	}
 
-	rec.t = -(ray_center_offset + sqrtf(disc));
+	if (is_outside) {
+		rec.t = - b - sqrtf(disc);
+	} else {
+		rec.t = - b + sqrtf(disc);
+	}
 
 	auto hit_point = r.origin + r.direction * rec.t;
 	rec.normal = (hit_point - this->center).normalize();
