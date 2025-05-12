@@ -389,6 +389,7 @@ int num_objects = scene->getNumObjects();
 		return color_Acc.clamp();
 	}
 
+	Color reflected_color_final;
 	if (mat.GetReflection() > 0) {
 		Vector incident = -ray.direction;  // reverse the direction
 
@@ -397,9 +398,11 @@ int num_objects = scene->getNumObjects();
 
 		auto reflected_coeff = mat.GetReflection();
 
-		color_Acc += reflected_color * reflected_coeff * mat.GetSpecColor();
+		reflected_color_final = reflected_color * reflected_coeff * mat.GetSpecColor();
 	}
 
+	Color transparent_color_final;
+	float fresnel = 1.0;
 	if (mat.GetTransmittance() == 1.0) {
 		// TODO: Fix color using beer
 
@@ -410,6 +413,7 @@ int num_objects = scene->getNumObjects();
 		auto v = -ray.direction;
 		auto v_t = (v * N_s) * N_s - v;
 		auto sin_incident = v_t.length();
+		auto cos_incident = sqrt(1.0 - sin_incident * sin_incident);
 
 		auto sin_theta = ior_1 / ior_2 * sin_incident;
 
@@ -417,11 +421,23 @@ int num_objects = scene->getNumObjects();
 			auto cos_theta = sqrt(1.0 - sin_theta * sin_theta);
 			auto t = v_t.normalize();
 
+			auto r0 = pow((ior_1 - ior_2) / (ior_1 + ior_2), 2.0);
+			fresnel = r0 + (1.0 - r0) * pow(1 - cos_incident, 5.0);
+
 			auto transparent_dir = sin_theta * t - cos_theta * N_s;
-			auto reflected_color = rayTracing(Ray(hitPoint - 2.0 * EPSILON * N_s, transparent_dir), depth + 1, ior_2, lightSample);
-			color_Acc += reflected_color;
+			auto transparent_color = rayTracing(Ray(hitPoint - 2.0 * EPSILON * N_s, transparent_dir), depth + 1, ior_2, lightSample);
+
+
+			// TODO: We should not have to multiply by 0.2 = 1 / 5, check why.
+			auto absorb = (Color(1.0, 1.0, 1.0) - mat.GetDiffColor()) * closestHit.t * 0.2;
+			auto attenuation = (-absorb).exp_();
+
+			transparent_color_final = transparent_color * attenuation;
 		}
 	}
+
+	color_Acc += transparent_color_final * (1.0 - fresnel);
+	color_Acc += reflected_color_final * fresnel;
 
 	return color_Acc.clamp();
 }

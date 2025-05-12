@@ -76,6 +76,9 @@ Color		operator /=	(float c)
   Color		operator *=	(Color c)
 				{ R*=c.R; G*=c.G; B*=c.B; return *this; }
 
+  Color		operator -	()
+				{ R=-R; G=-G; B=-B; return *this; }
+
    friend inline
   istream&	operator >>	(istream& s, Color& c)
 	{ return s >> c.R >> c.G >> c.B; }
