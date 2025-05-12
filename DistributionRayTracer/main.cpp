@@ -401,11 +401,26 @@ int num_objects = scene->getNumObjects();
 	}
 
 	if (mat.GetTransmittance() == 1.0) {
-		// TODO: Fresnel + change K_s
-		auto transparent_dir = ray.direction;
-		auto reflected_color = rayTracing(Ray(hitPoint - EPSILON * N, transparent_dir), depth + 1, ior_1, lightSample);
+		// TODO: Fix color using beer
 
-		color_Acc += reflected_color;
+		bool is_inside = ray.direction * N > 0;
+		auto ior_2 = is_inside ? 1.0 : mat.GetRefrIndex();
+		auto N_s = is_inside ? -N : N;
+
+		auto v = -ray.direction;
+		auto v_t = (v * N_s) * N_s - v;
+		auto sin_incident = v_t.length();
+
+		auto sin_theta = ior_1 / ior_2 * sin_incident;
+
+		if (abs(sin_theta) <= 1.0) {
+			auto cos_theta = sqrt(1.0 - sin_theta * sin_theta);
+			auto t = v_t.normalize();
+
+			auto transparent_dir = sin_theta * t - cos_theta * N_s;
+			auto reflected_color = rayTracing(Ray(hitPoint - 2.0 * EPSILON * N_s, transparent_dir), depth + 1, ior_2, lightSample);
+			color_Acc += reflected_color;
+		}
 	}
 
 	return color_Acc.clamp();
