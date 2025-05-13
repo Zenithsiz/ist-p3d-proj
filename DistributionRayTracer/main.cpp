@@ -396,8 +396,6 @@ Color rayTracing(
 	Color transparent_color_final;
 	float fresnel = 1.0;
 	if (mat.GetTransmittance() == 1.0) {
-		// TODO: Fix color using beer
-
 		bool is_inside = ray.direction * N > 0;
 		auto ior_2 = is_inside ? 1.0 : mat.GetRefrIndex();
 		auto N_s = is_inside ? -N : N;
@@ -414,15 +412,15 @@ Color rayTracing(
 			auto t = v_t.normalize();
 
 			auto r0 = pow((ior_1 - ior_2) / (ior_1 + ior_2), 2.0);
-			fresnel = r0 + (1.0 - r0) * pow(1 - cos_incident, 5.0);
+			auto fresnel_cos = is_inside ? cos_theta : cos_incident;
+			fresnel = r0 + (1.0 - r0) * pow(1 - fresnel_cos, 5.0);
 
 			auto transparent_dir = sin_theta * t - cos_theta * N_s;
 			auto transparent_color =
 				rayTracing(Ray(hitPoint - 2.0 * EPSILON * N_s, transparent_dir), depth + 1, ior_2, lightSample);
 
-			// TODO: We should not have to multiply by 0.2 = 1 / 5, check why.
-			auto absorb = (Color(1.0, 1.0, 1.0) - mat.GetDiffColor()) * closestHit.t * 0.2;
-			auto attenuation = (-absorb).exp_();
+			auto refraction_color = Color(1.0, 1.0, 1.0) - mat.GetDiffColor();
+			auto attenuation = is_inside ? (-refraction_color * closestHit.t).exp_() : Color(1.0, 1.0, 1.0);
 
 			transparent_color_final = transparent_color * attenuation;
 		}
