@@ -84,7 +84,7 @@ int RES_X, RES_Y;
 
 int WindowHandle = 0;
 
-bool AA = false;
+bool AA = true;
 unsigned int spp; // samples per pixel
 bool DOF = false;
 bool SoftShadows = false;
@@ -524,24 +524,33 @@ void renderScene() {
 				////// ZONE B.1  -  Distribution Ray Tracer: pixel, area light and lens supersampling with jittering (or
 				/// stratified)
 				if (AA) {
+					int n = (int)sqrt(spp); // spp should be a perfect square (like 4, 9, 16, 25)
 #pragma omp parallel for
-					for (unsigned int p = 0; p < spp; p++) {  //to compile in windows without errors p must be an int
-						if (!DOF) {
-							ray = scene->GetCamera()->PrimaryRay(pixel_sample);
-						} else { // sample_unit_disk() returns [-1 1] and aperture is the diameter of the lens
+					for (int py = 0; py < n; py++) {
+						for (int px = 0; px < n; px++) {
 
-							Vector lens_sample = rnd_unit_disk() * scene->GetCamera()->GetAperture() /
-							                     2.0f; // lens sample in Camera coordinates
+							//Anti-aliasing with the jittered method (use the spp parameter in P3F scenes)//  to work you need to change the cpp value inside the P3D scenes
+							float jitter_x = (px + rand_float()) / n;
+							float jitter_y = (py + rand_float()) / n;
 
-							/////////PROGRAM THE FOLLOWING FUNCTION//////////////////////
-							ray = scene->GetCamera()->PrimaryRay(lens_sample, pixel_sample);
+							pixel_sample.x = x + jitter_x;		
+							pixel_sample.y = y + jitter_y;
+
+							if (!DOF) {
+								ray = scene->GetCamera()->PrimaryRay(pixel_sample);
+							}
+							else {
+								Vector lens_sample = rnd_unit_disk() * scene->GetCamera()->GetAperture() / 2.0f;
+								ray = scene->GetCamera()->PrimaryRay(lens_sample, pixel_sample);
+							}
+
+							color += rayTracing(ray, 1, 1.0, light_sample);
 						}
-
-						/////////PROGRAM THE FOLLOWING FUNCTION//////////////////////
-						color += rayTracing(ray, 1, 1.0, light_sample);
 					}
-					color *= 1.0 / ((float)spp);
+
+					color *= 1.0f / (n * n); // average the samples
 				}
+
 
 				// ZONE B.2  - Whitted ray tracer  (without antialiasing)
 				else {
