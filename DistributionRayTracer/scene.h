@@ -32,8 +32,8 @@ struct HitRecord {
 class Material {
   public:
 	Material()
-		: m_diffColor(Color(0.2f, 0.2f, 0.2f)), m_Diff(0.2f), m_specColor(Color(1.0f, 1.0f, 1.0f)), m_Spec(0.8f),
-		  m_Shine(20), m_Refl(1.0f), m_T(0.0f), m_RIndex(1.0f) {};
+		: m_diffColor(Color(0.2f, 0.2f, 0.2f)), m_specColor(Color(1.0f, 1.0f, 1.0f)), m_Refl(1.0f), m_T(0.0f),
+		  m_Diff(0.2f), m_Shine(20), m_Spec(0.8f), m_RIndex(1.0f) {};
 
 	Material(const Color &c, float Kd, const Color &cs, float Ks, float Shine, float T, float ior) {
 		m_diffColor = c;
@@ -189,7 +189,7 @@ class Triangle : public Object {
 class Sphere : public Object {
   public:
 	Sphere(const Vector &a_center, float a_radius)
-		: center(a_center), SqRadius(a_radius * a_radius), radius(a_radius) {};
+		: center(a_center), radius(a_radius), SqRadius(a_radius * a_radius) {};
 	HitRecord hit(Ray &r) const;
 	AABB GetBoundingBox(void);
 

@@ -1,6 +1,8 @@
 #include "macros.h"
 #include "rayAccelerator.h"
 
+#include <stack>
+
 using namespace std;
 
 BVH::BVHNode::BVHNode(void) {}
@@ -50,6 +52,9 @@ void BVH::Build(vector<Object *> &objs) {
 }
 
 void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
+	(void)left_index;
+	(void)right_index;
+	(void)node;
 
 	// PUT YOUR CODE HERE
 
@@ -59,12 +64,16 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 }
 
 bool BVH::Traverse(Ray &ray, const Object **hit_obj, HitRecord &hitRec) const {
-	float tmp;
 	bool hit = false;
 	stack<StackItem> hit_stack;
 	HitRecord rec; // rec.isHit initialized to false and rec.t initialized with FLT_MAX
 
 	BVHNode *currentNode = nodes[0];
+
+	(void)currentNode;
+	(void)ray;
+	(void)hit_obj;
+	(void)hitRec;
 
 	// PUT YOUR CODE HERE
 
@@ -72,12 +81,13 @@ bool BVH::Traverse(Ray &ray, const Object **hit_obj, HitRecord &hitRec) const {
 }
 
 bool BVH::Traverse(Ray &ray) const { // shadow ray with length
-	float tmp;
 	stack<StackItem> hit_stack;
 	HitRecord rec;
 
 	double length = ray.direction.length(); // distance between light and intersection point
 	ray.direction.normalize();
+
+	(void)length;
 
 	return false; // no primitive intersection
 }

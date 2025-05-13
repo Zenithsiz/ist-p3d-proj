@@ -118,6 +118,9 @@ class Camera {
 		Vector ray_dir;
 		Vector eye_offset;
 
+		(void)lens_sample;
+		(void)pixel_sample;
+
 		// PUT YOUR CODE HERE
 		return Ray(eye_offset, ray_dir);
 	}

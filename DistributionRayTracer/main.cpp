@@ -255,6 +255,8 @@ ILuint saveImgFile(const char *filename) {
 /////////////////////////////////////////////////////////////////////// CALLBACKS
 
 void timer(int value) {
+	(void)value;
+
 	FramesPerSecond = FPS;
 	if (!Progressive_flg) {
 		std::ostringstream oss;
@@ -455,6 +457,7 @@ void renderScene() {
 					Ray ray;
 					Vector pixel_sample;                            // viewport coordinates
 					Vector light_sample = Vector(0.0f, 0.0f, 0.0f); // sample in Light coordinates
+					(void)light_sample;
 
 					pixel_sample.x = x + rand_double();
 					pixel_sample.y = y + rand_double();
@@ -524,7 +527,7 @@ void renderScene() {
 				/// stratified)
 				if (AA) {
 #pragma omp parallel for
-					for (int p = 0; p < spp; p++) {
+					for (unsigned int p = 0; p < spp; p++) {
 						if (!DOF) {
 							ray = scene->GetCamera()->PrimaryRay(pixel_sample);
 						} else { // sample_unit_disk() returns [-1 1] and aperture is the diameter of the lens
@@ -618,6 +621,9 @@ void reshape(int w, int h) {
 }
 
 void processKeys(unsigned char key, int xx, int yy) {
+	(void)xx;
+	(void)yy;
+
 	switch (key) {
 
 		case 27: glutLeaveMainLoop(); break;
@@ -686,8 +692,8 @@ void processMouseButtons(int button, int state, int xx, int yy) {
 void processMouseMotion(int xx, int yy) {
 
 	int deltaX, deltaY;
-	float alphaAux, betaAux;
-	float rAux;
+	float alphaAux = 0.0, betaAux = 0.0;
+	float rAux = 0.0;
 
 	deltaX = -xx + startX;
 	deltaY = yy - startY;
@@ -726,6 +732,9 @@ void processMouseMotion(int xx, int yy) {
 }
 
 void mouseWheel(int wheel, int direction, int x, int y) {
+	(void)wheel;
+	(void)x;
+	(void)y;
 
 	r += direction * 0.1f;
 	if (r < 0.1f) {
@@ -762,6 +771,7 @@ void setupGLEW() {
 		exit(EXIT_FAILURE);
 	}
 	GLenum err_code = glGetError();
+	(void)err_code;
 	printf("Vendor: %s\n", glGetString(GL_VENDOR));
 	printf("Renderer: %s\n", glGetString(GL_RENDERER));
 	printf("Version: %s\n", glGetString(GL_VERSION));

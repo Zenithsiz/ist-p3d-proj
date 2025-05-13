@@ -2,10 +2,7 @@
 #define ACCELERATOR_H
 
 #include "scene.h"
-#include <algorithm>
 #include <cmath>
-#include <queue>
-#include <stack>
 
 using namespace std;
 

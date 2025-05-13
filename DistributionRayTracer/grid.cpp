@@ -16,7 +16,7 @@ void Grid::addObject(Object *o) {
 }
 
 Object *Grid::getObject(unsigned int index) const {
-	if (index >= 0 && index < objects.size()) {
+	if (index < objects.size()) {
 		return objects[index];
 	}
 	return NULL;
@@ -24,12 +24,6 @@ Object *Grid::getObject(unsigned int index) const {
 
 // ---------------------------------------------setup_cells
 void Grid::Build(vector<Object *> &objs) {
-
-	int xmin, xmax;
-	int ymin, ymax;
-	int zmin, zmax;
-	int index; // cell's array index
-
 	Vector min = Vector(FLT_MAX, FLT_MAX, FLT_MAX), max = Vector(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 
 	AABB grid_bbox = AABB(min, max);

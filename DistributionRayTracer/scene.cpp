@@ -289,7 +289,7 @@ void Scene::addObject(Object *o) {
 }
 
 Object *Scene::getObject(unsigned int index) {
-	if (index >= 0 && index < objects.size()) {
+	if (index < objects.size()) {
 		return objects[index];
 	}
 	return NULL;
@@ -304,7 +304,7 @@ void Scene::addLight(Light *l) {
 }
 
 Light *Scene::getLight(unsigned int index) {
-	if (index >= 0 && index < lights.size()) {
+	if (index < lights.size()) {
 		return lights[index];
 	}
 	return NULL;
@@ -316,10 +316,12 @@ void Scene::LoadSkybox(const char *sky_dir) {
 	const char *maps[] = {"/right.jpg", "/left.jpg", "/top.jpg", "/bottom.jpg", "/front.jpg", "/back.jpg"};
 
 	for (int i = 0; i < 6; i++) {
-		strncpy(buffer, sky_dir, sizeof(buffer));
+		strncpy(buffer, sky_dir, sizeof(buffer) - 1);
 		strncat(buffer, maps[i], sizeof(buffer) - strlen(buffer) - 1);
-		filenames[i] = (char *)malloc(sizeof(buffer));
-		strncpy(filenames[i], buffer, sizeof(buffer));
+
+		int filenames_len = sizeof(buffer);
+		filenames[i] = (char *)malloc(filenames_len);
+		strncpy(filenames[i], buffer, filenames_len);
 	}
 
 	ILuint ImageName;
@@ -362,7 +364,6 @@ void Scene::LoadSkybox(const char *sky_dir) {
 }
 
 Color Scene::GetSkyboxColor(Ray &r) {
-	float t_intersec;
 	Vector cubemap_coords; // To index the skybox
 
 	float ma;
@@ -427,10 +428,11 @@ Color Scene::GetSkyboxColor(Ray &r) {
 	height = skybox_img[img_side].resY;
 	bytesperpixel = skybox_img[img_side].BPP;
 
+	// TODO: These expressions weren't being assigned to, should we?
 	xp = int((width - 1) * s);
-	xp < 0 ? 0 : (xp > (width - 1) ? width - 1 : xp);
+	// xp < 0 ? 0 : (xp > (width - 1) ? width - 1 : xp);
 	yp = int((height - 1) * t);
-	yp < 0 ? 0 : (yp > (height - 1) ? height - 1 : yp);
+	// yp = yp < 0 ? 0 : (yp > (height - 1) ? height - 1 : yp);
 
 	float red = u8tofloat(skybox_img[img_side].img[(yp * width + xp) * bytesperpixel]);
 	float green = u8tofloat(skybox_img[img_side].img[(yp * width + xp) * bytesperpixel + 1]);
@@ -546,12 +548,12 @@ bool Scene::load_p3f(const char *name) {
 
 				file >> total_vertices >> total_faces;
 				verticesArray = (Vector *)malloc(total_vertices * sizeof(Vector));
-				for (int i = 0; i < total_vertices; i++) {
+				for (unsigned int i = 0; i < total_vertices; i++) {
 					file >> vertex;
 					verticesArray[i] = vertex;
 				}
 
-				for (int i = 0; i < total_faces; i++) {
+				for (unsigned int i = 0; i < total_faces; i++) {
 					file >> P0 >> P1 >> P2;
 					if (P0 > 0) {
 						P0 -= 1;
