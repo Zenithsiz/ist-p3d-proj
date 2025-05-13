@@ -1,21 +1,19 @@
 
-#include "vector.h"
 #include "ray.h"
+#include "vector.h"
 
-class AABB
-{
-public:
+class AABB {
+  public:
 	Vector min, max;
 
 	AABB(void);
 	virtual ~AABB();
-	AABB(const Vector& v0, const Vector& v1);
-	AABB(const AABB& bbox);
-	AABB operator= (const AABB& rhs);
+	AABB(const Vector &v0, const Vector &v1);
+	AABB(const AABB &bbox);
+	AABB operator=(const AABB &rhs);
 
-	bool isInside(const Vector& p) const;
-	bool hit(const Ray& r, float& t) const;
+	bool isInside(const Vector &p) const;
+	bool hit(const Ray &r, float &t) const;
 	Vector centroid(void) const;
 	void extend(AABB box);
-
 };

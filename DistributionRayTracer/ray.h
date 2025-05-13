@@ -3,11 +3,10 @@
 
 #include "vector.h"
 
-class Ray
-{
-public:
+class Ray {
+  public:
 	Ray() {};
-	Ray(const Vector& o, const Vector& dir ) : origin(o), direction(dir) {};
+	Ray(const Vector &o, const Vector &dir) : origin(o), direction(dir) {};
 
 	Vector origin;
 	Vector direction;

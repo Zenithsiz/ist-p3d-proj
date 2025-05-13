@@ -5,28 +5,28 @@
 #include "macros.h"
 
 //-------------------------------------------------------------------- - default constructor
-AABB::AABB(void)
-{
+AABB::AABB(void) {
 	min = Vector(-1.0f, -1.0f, -1.0f);
 	max = Vector(1.0f, 1.0f, 1.0f);
 }
 
 // --------------------------------------------------------------------- constructor
-AABB::AABB(const Vector& v0, const Vector& v1)
-{
-	min = v0; max = v1;
+AABB::AABB(const Vector &v0, const Vector &v1) {
+	min = v0;
+	max = v1;
 }
 
 // --------------------------------------------------------------------- copy constructor
-AABB::AABB(const AABB& bbox)
-{
-	min = bbox.min; max = bbox.max;
+AABB::AABB(const AABB &bbox) {
+	min = bbox.min;
+	max = bbox.max;
 }
 
 // --------------------------------------------------------------------- assignment operator
-AABB AABB::operator= (const AABB& rhs) {
-	if (this == &rhs)
+AABB AABB::operator=(const AABB &rhs) {
+	if (this == &rhs) {
 		return (*this);
+	}
 	min = rhs.min;
 	max = rhs.max;
 	return (*this);
@@ -38,8 +38,7 @@ AABB::~AABB() {}
 // --------------------------------------------------------------------- inside
 // used to test if a ray starts inside a bbox
 
-bool AABB::isInside(const Vector& p) const
-{
+bool AABB::isInside(const Vector &p) const {
 	return ((p.x > min.x && p.x < max.x) && (p.y > min.y && p.y < max.y) && (p.z > min.z && p.z < max.z));
 }
 
@@ -50,19 +49,30 @@ Vector AABB::centroid(void) const {
 
 // --------------------------------------------------------------------- extend AABB
 void AABB::extend(AABB box) {
-	if (min.x > box.min.x) min.x = box.min.x;
-	if (min.y > box.min.y) min.y = box.min.y;
-	if (min.z > box.min.z) min.z = box.min.z;
+	if (min.x > box.min.x) {
+		min.x = box.min.x;
+	}
+	if (min.y > box.min.y) {
+		min.y = box.min.y;
+	}
+	if (min.z > box.min.z) {
+		min.z = box.min.z;
+	}
 
-	if (max.x < box.max.x) max.x = box.max.x;
-	if (max.y < box.max.y) max.y = box.max.y;
-	if (max.z < box.max.z) max.z = box.max.z;
+	if (max.x < box.max.x) {
+		max.x = box.max.x;
+	}
+	if (max.y < box.max.y) {
+		max.y = box.max.y;
+	}
+	if (max.z < box.max.z) {
+		max.z = box.max.z;
+	}
 }
 
 // --------------------------------------------------------------------- AABB intersection
 
-bool AABB::hit(const Ray& ray, float& t) const
-{
+bool AABB::hit(const Ray &ray, float &t) const {
 	double t0, t1;
 
 	float ox = ray.origin.x;
@@ -86,8 +96,7 @@ bool AABB::hit(const Ray& ray, float& t) const
 	if (a >= 0) {
 		tx_min = (x0 - ox) * a;
 		tx_max = (x1 - ox) * a;
-	}
-	else {
+	} else {
 		tx_min = (x1 - ox) * a;
 		tx_max = (x0 - ox) * a;
 	}
@@ -96,8 +105,7 @@ bool AABB::hit(const Ray& ray, float& t) const
 	if (b >= 0) {
 		ty_min = (y0 - oy) * b;
 		ty_max = (y1 - oy) * b;
-	}
-	else {
+	} else {
 		ty_min = (y1 - oy) * b;
 		ty_max = (y0 - oy) * b;
 	}
@@ -106,16 +114,15 @@ bool AABB::hit(const Ray& ray, float& t) const
 	if (c >= 0) {
 		tz_min = (z0 - oz) * c;
 		tz_max = (z1 - oz) * c;
-	}
-	else {
+	} else {
 		tz_min = (z1 - oz) * c;
 		tz_max = (z0 - oz) * c;
 	}
 
-	//largest entering t value
+	// largest entering t value
 	t0 = MAX3(tx_min, ty_min, tz_min);
 
-	//smallest exiting t value
+	// smallest exiting t value
 	t1 = MIN3(tx_max, ty_max, tz_max);
 
 	t = (t0 < 0) ? t1 : t0;
