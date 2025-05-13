@@ -525,7 +525,7 @@ void renderScene() {
 				/// stratified)
 				if (AA) {
 #pragma omp parallel for
-					for (unsigned int p = 0; p < spp; p++) {
+					for (unsigned int p = 0; p < spp; p++) {  //to compile in windows without errors p must be an int
 						if (!DOF) {
 							ray = scene->GetCamera()->PrimaryRay(pixel_sample);
 						} else { // sample_unit_disk() returns [-1 1] and aperture is the diameter of the lens
