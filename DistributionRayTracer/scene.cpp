@@ -173,8 +173,9 @@ HitRecord Sphere::hit(Ray &r) const {
 }
 
 AABB Sphere::GetBoundingBox() {
-	Vector a_min = this->center - Vector(this->radius, this->radius, this->radius);
-	Vector a_max = this->center - Vector(this->radius, this->radius, this->radius);
+	auto size = Vector(this->radius, this->radius, this->radius);
+	Vector a_min = this->center - size;
+	Vector a_max = this->center + size;
 
 	return (AABB(a_min, a_max));
 }
