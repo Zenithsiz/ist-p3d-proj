@@ -383,17 +383,17 @@ Color rayTracing(
 
 			case QUAD: {
 				if (spp == 0) {
-					constexpr size_t len = 8;
-					for (size_t y = 0; y < len; y++) {
-						for (size_t x = 0; x < len; x++) {
-							auto lightSample = Vector((float)x / (len - 1), (float)y / (len - 1), 0.0);
+					unsigned int n = sqrt(light.gridRes);
+					for (size_t y = 0; y < n; y++) {
+						for (size_t x = 0; x < n; x++) {
+							auto lightSample = Vector((float)x / (n - 1), (float)y / (n - 1), 0.0);
 							auto light_pos = light.getAreaLightPoint(lightSample);
 							handle_light(light_pos);
 						}
 					}
 
-					diffusive_color /= len * len;
-					specular_color /= len * len;
+					diffusive_color /= light.gridRes;
+					specular_color /= light.gridRes;
 				} else {
 					auto light_pos = light.getAreaLightPoint(lightSample);
 					handle_light(light_pos);
