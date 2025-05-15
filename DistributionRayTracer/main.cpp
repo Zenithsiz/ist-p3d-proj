@@ -415,6 +415,10 @@ Color rayTracing(
 		Vector incident = -ray.direction; // reverse the direction
 
 		auto reflected_dir = 2 * (incident * N) * N - incident;
+		if (mat.GetTransmittance() == 0.0) {
+			reflected_dir += 0.3 * rnd_unit_sphere();
+			reflected_dir.normalize();
+		}
 		auto reflected_color = rayTracing(Ray(hitPoint + EPSILON * N, reflected_dir), depth + 1, ior_1, lightSample);
 
 		auto reflected_coeff = mat.GetReflection();
