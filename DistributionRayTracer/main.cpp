@@ -386,7 +386,7 @@ Color rayTracing(
 					constexpr size_t len = 8;
 					for (size_t y = 0; y < len; y++) {
 						for (size_t x = 0; x < len; x++) {
-							auto lightSample = Vector((float)x / len, (float)y / len, 0.0);
+							auto lightSample = Vector((float)x / (len - 1), (float)y / (len - 1), 0.0);
 							auto light_pos = light.getAreaLightPoint(lightSample);
 							handle_light(light_pos);
 						}
