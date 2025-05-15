@@ -135,7 +135,7 @@ class Light {
 		emission = col;
 	}
 
-	Vector getAreaLightPoint(const Vector &sample) // get a point in WC
+	Vector getAreaLightPoint(const Vector &sample) const // get a point in WC
 	{
 		return (position + e1 * sample.x + e2 * sample.y);
 	}

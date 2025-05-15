@@ -350,29 +350,58 @@ Color rayTracing(
 	for (int i = 0; i < num_lights; i++) {
 		const auto &light = *scene->getLight(i);
 
-		auto l = (light.position - hitPoint).normalize();
-		if (l * N <= 0) {
-			continue;
-		}
+		Color diffusive_color;
+		Color specular_color;
 
-		auto light_ray = Ray(hitPoint, (light.position - hitPoint).normalize());
-		bool wasHit = false;
-		for (int i = 0; i < num_objects; i++) {
-			const auto &obj = *scene->getObject(i);
-			auto hit = obj.hit(light_ray);
-			if (hit.isHit) {
-				wasHit = true;
+		// Handles a single light
+		auto handle_light =
+			[ray, hitPoint, num_objects, N, &diffusive_color, &specular_color, mat, light](auto light_pos) {
+				auto l = (light_pos - hitPoint).normalize();
+				if (l * N <= 0) {
+					return;
+				}
+
+				auto light_ray = Ray(hitPoint, (light_pos - hitPoint).normalize());
+				for (int i = 0; i < num_objects; i++) {
+					const auto &obj = *scene->getObject(i);
+					auto hit = obj.hit(light_ray);
+					if (hit.isHit) {
+						return;
+					}
+				}
+
+				diffusive_color += mat.GetDiffColor() * mat.GetDiffuse() * max(N * l, 0.0);
+				auto h = (l - ray.direction).normalize();
+				specular_color += light.emission * mat.GetSpecular() * powf(max(h * N, 0.0), mat.GetShine());
+			};
+
+		switch (light.type) {
+			case PUNCTUAL: {
+				handle_light(light.position);
+				break;
+			}
+
+			case QUAD: {
+				if (spp == 0) {
+					constexpr size_t len = 8;
+					for (size_t y = 0; y < len; y++) {
+						for (size_t x = 0; x < len; x++) {
+							auto lightSample = Vector((float)x / len, (float)y / len, 0.0);
+							auto light_pos = light.getAreaLightPoint(lightSample);
+							handle_light(light_pos);
+						}
+					}
+
+					diffusive_color /= len * len;
+					specular_color /= len * len;
+				} else {
+					auto light_pos = light.getAreaLightPoint(lightSample);
+					handle_light(light_pos);
+				}
+
 				break;
 			}
 		}
-		if (wasHit) {
-			continue;
-		}
-
-		auto diffusive_color = mat.GetDiffColor() * mat.GetDiffuse() * max(N * l, 0.0);
-
-		auto h = (l - ray.direction).normalize();
-		auto specular_color = light.emission * mat.GetSpecular() * powf(max(h * N, 0.0), mat.GetShine());
 
 		color_Acc += diffusive_color + specular_color;
 	}
@@ -453,9 +482,7 @@ void renderScene() {
 					int index_col = 0;
 					Color color;
 					Ray ray;
-					Vector pixel_sample;                            // viewport coordinates
-					Vector light_sample = Vector(0.0f, 0.0f, 0.0f); // sample in Light coordinates
-					(void)light_sample;
+					Vector pixel_sample; // viewport coordinates
 
 					pixel_sample.x = x + rand_double();
 					pixel_sample.y = y + rand_double();
@@ -471,7 +498,8 @@ void renderScene() {
 						ray = scene->GetCamera()->PrimaryRay(lens_sample, pixel_sample);
 					}
 					/////////PROGRAM THE FOLLOWING FUNCTION//////////////////////
-					color = rayTracing(ray, 1, 1.0, Vector(rand_float(), rand_float(), 0.0f));
+					auto lightSample = Vector(rand_float(), rand_float(), 0.0f);
+					color = rayTracing(ray, 1, 1.0, lightSample);
 
 					index_pos = 2 * (x + RES_X * y);
 					vertices[index_pos] = (float)x;
@@ -518,8 +546,7 @@ void renderScene() {
 				int index_pos = 0;
 				int index_col = 0;
 				Ray ray;
-				Vector pixel_sample;                            // viewport coordinates
-				Vector light_sample = Vector(0.0f, 0.0f, 0.0f); // sample in Light coordinates
+				Vector pixel_sample; // viewport coordinates
 
 				////// ZONE B.1  -  Distribution Ray Tracer: pixel, area light and lens supersampling with jittering (or
 				/// stratified)
@@ -529,7 +556,8 @@ void renderScene() {
 					for (int py = 0; py < n; py++) {
 						for (int px = 0; px < n; px++) {
 
-							//Anti-aliasing with the jittered method (use the spp parameter in P3F scenes)//  to work you need to change the cpp value inside the P3D scenes
+							// Anti-aliasing with the jittered method (use the spp parameter in P3F scenes)//  to work
+							// you need to change the cpp value inside the P3D scenes
 							float jitter_x = (px + rand_float()) / n;
 							float jitter_y = (py + rand_float()) / n;
 
@@ -538,19 +566,18 @@ void renderScene() {
 
 							if (!DOF) {
 								ray = scene->GetCamera()->PrimaryRay(pixel_sample);
-							}
-							else {
+							} else {
 								Vector lens_sample = rnd_unit_disk() * scene->GetCamera()->GetAperture() / 2.0f;
 								ray = scene->GetCamera()->PrimaryRay(lens_sample, pixel_sample);
 							}
 
+							Vector light_sample = Vector(rand_float(), rand_float(), 0.0f);
 							color += rayTracing(ray, 1, 1.0, light_sample);
 						}
 					}
 
 					color *= 1.0f / (n * n); // average the samples
 				}
-
 
 				// ZONE B.2  - Whitted ray tracer  (without antialiasing)
 				else {
@@ -561,6 +588,8 @@ void renderScene() {
 					/////////PROGRAM THE FOLLOWING FUNCTION//////////////////////
 					Ray ray1 = scene->GetCamera()->PrimaryRay(pixel_sample);
 					/////////PROGRAM THE FOLLOWING FUNCTION//////////////////////
+
+					Vector light_sample = Vector(0.0, 0.0, 0.0f);
 					color = rayTracing(ray1, 1, 1.0, light_sample); // light_sample is a dummy variable in this case,
 				}
 
