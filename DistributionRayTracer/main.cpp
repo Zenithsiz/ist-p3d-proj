@@ -461,6 +461,14 @@ Color rayTracing(
 	return color_Acc.clamp();
 }
 
+struct Vector2 {
+	float x;
+	float y;
+};
+
+thread_local std::vector<Vector2> pixel_jitters;
+thread_local std::vector<Vector2> color_jitters;
+
 // Render function by primary ray casting from the eye towards the scene's objects
 void renderScene() {
 	unsigned int counter = 0;
@@ -552,30 +560,47 @@ void renderScene() {
 				/// stratified)
 				if (AA) {
 					int n = (int)sqrt(spp); // spp should be a perfect square (like 4, 9, 16, 25)
+
+					pixel_jitters.resize(spp);
+					color_jitters.resize(spp);
+
+					int cur_sample = 0;
 					for (int py = 0; py < n; py++) {
 						for (int px = 0; px < n; px++) {
+							pixel_jitters[cur_sample].x = (px + rand_float()) / n;
+							pixel_jitters[cur_sample].y = (py + rand_float()) / n;
 
-							// Anti-aliasing with the jittered method (use the spp parameter in P3F scenes)//  to work
-							// you need to change the cpp value inside the P3D scenes
-							float jitter_x = (px + rand_float()) / n;
-							float jitter_y = (py + rand_float()) / n;
+							color_jitters[cur_sample].x = (px + rand_float()) / n;
+							color_jitters[cur_sample].y = (py + rand_float()) / n;
 
-							pixel_sample.x = x + jitter_x;
-							pixel_sample.y = y + jitter_y;
-
-							if (!DOF) {
-								ray = scene->GetCamera()->PrimaryRay(pixel_sample);
-							} else {
-								Vector lens_sample = rnd_unit_disk() * scene->GetCamera()->GetAperture() / 2.0f;
-								ray = scene->GetCamera()->PrimaryRay(lens_sample, pixel_sample);
-							}
-
-							Vector light_sample = Vector(rand_float(), rand_float(), 0.0f);
-							color += rayTracing(ray, 1, 1.0, light_sample);
+							cur_sample += 1;
 						}
 					}
 
-					color *= 1.0f / (n * n); // average the samples
+					for (unsigned int i = spp - 1; i > 0; i--) {
+						unsigned int j = rand() % (i + 1);
+						if (i != j) {
+							std::swap(color_jitters[i], color_jitters[j]);
+						}
+					}
+
+					for (unsigned int cur_sample = 0; cur_sample < spp; cur_sample++) {
+						// Anti-aliasing with the jittered method (use the spp parameter in P3F scenes)
+						pixel_sample.x = x + pixel_jitters[cur_sample].x;
+						pixel_sample.y = y + pixel_jitters[cur_sample].y;
+
+						if (!DOF) {
+							ray = scene->GetCamera()->PrimaryRay(pixel_sample);
+						} else {
+							Vector lens_sample = rnd_unit_disk() * scene->GetCamera()->GetAperture() / 2.0f;
+							ray = scene->GetCamera()->PrimaryRay(lens_sample, pixel_sample);
+						}
+
+						Vector light_sample = Vector(color_jitters[cur_sample].x, color_jitters[cur_sample].y, 0.0f);
+						color += rayTracing(ray, 1, 1.0, light_sample);
+					}
+
+					color /= spp; // average the samples
 				}
 
 				// ZONE B.2  - Whitted ray tracer  (without antialiasing)
