@@ -552,7 +552,6 @@ void renderScene() {
 				/// stratified)
 				if (AA) {
 					int n = (int)sqrt(spp); // spp should be a perfect square (like 4, 9, 16, 25)
-#pragma omp parallel for
 					for (int py = 0; py < n; py++) {
 						for (int px = 0; px < n; px++) {
 
