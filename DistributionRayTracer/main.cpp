@@ -533,7 +533,7 @@ void renderScene() {
 							float jitter_x = (px + rand_float()) / n;
 							float jitter_y = (py + rand_float()) / n;
 
-							pixel_sample.x = x + jitter_x;		
+							pixel_sample.x = x + jitter_x;
 							pixel_sample.y = y + jitter_y;
 
 							if (!DOF) {
@@ -824,7 +824,7 @@ void init(int argc, char *argv[]) {
 
 void init_scene(void) {
 	char scenes_dir[70] = "P3D_Scenes/";
-	char input_user[50] = "teste.p3f";
+	char input_user[50];
 	char scene_name[70];
 
 	scene = new Scene();
@@ -833,13 +833,13 @@ void init_scene(void) {
 
 		while (true) {
 			cout << "Input the Scene Name: ";
-			// cin >> input_user;
+			cin >> input_user;
 			strncpy(scene_name, scenes_dir, sizeof(scene_name));
 			strncat(scene_name, input_user, sizeof(scene_name) - strlen(scene_name) - 1);
 
 			ifstream file(scene_name, ios::in);
 			if (file.fail()) {
-				printf("\nError opening P3F file.\n");
+				cout << "\nError opening P3F file " << scene_name << ": " << strerror(errno) << endl;
 			} else {
 				break;
 			}
