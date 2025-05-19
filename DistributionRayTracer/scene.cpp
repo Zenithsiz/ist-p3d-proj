@@ -42,7 +42,7 @@ Triangle::Triangle(Vector &P0, Vector &P1, Vector &P2) {
 	Max += EPSILON;
 }
 
-AABB Triangle::GetBoundingBox() {
+AABB Triangle::GetBoundingBox() const {
 	return (AABB(Min, Max));
 }
 
@@ -51,7 +51,6 @@ AABB Triangle::GetBoundingBox() {
 //
 
 HitRecord Triangle::hit(Ray &r) const {
-
 	HitRecord rec;
 	rec.t = FLT_MAX;   // not necessary
 	rec.isHit = false; // not necessary
@@ -64,10 +63,6 @@ HitRecord Triangle::hit(Ray &r) const {
 	Vector edge2 = points[2] - points[0];
 	Vector ray_cross_e2 = r.direction % edge2;
 	float det = edge1 * ray_cross_e2;
-
-	if (det > -EPSILON && det < EPSILON) {
-		return rec;
-	}
 
 	float inv_det = 1.0 / det;
 	Vector s = r.origin - points[0];
@@ -172,7 +167,7 @@ HitRecord Sphere::hit(Ray &r) const {
 	return (rec);
 }
 
-AABB Sphere::GetBoundingBox() {
+AABB Sphere::GetBoundingBox() const {
 	auto size = Vector(this->radius, this->radius, this->radius);
 	Vector a_min = this->center - size;
 	Vector a_max = this->center + size;
@@ -180,13 +175,13 @@ AABB Sphere::GetBoundingBox() {
 	return (AABB(a_min, a_max));
 }
 
-aaBox::aaBox(Vector &minPoint, Vector &maxPoint) // Axis aligned Box: another geometric object
+aaBox::aaBox(const Vector &minPoint, const Vector &maxPoint) // Axis aligned Box: another geometric object
 {
 	this->min = minPoint;
 	this->max = maxPoint;
 }
 
-AABB aaBox::GetBoundingBox() {
+AABB aaBox::GetBoundingBox() const {
 	return (AABB(min, max));
 }
 

@@ -150,7 +150,7 @@ class Object {
 		m_Material = a_Mat;
 	}
 	virtual HitRecord hit(Ray &r) const = 0;
-	virtual AABB GetBoundingBox() {
+	virtual AABB GetBoundingBox() const {
 		return AABB();
 	}
 	Vector getCentroid(void) {
@@ -176,7 +176,7 @@ class Plane : public Object {
 class Triangle : public Object {
   public:
 	Triangle(Vector &P0, Vector &P1, Vector &P2);
-	AABB GetBoundingBox(void);
+	AABB GetBoundingBox(void) const;
 	HitRecord hit(Ray &r) const;
 
   protected:
@@ -191,7 +191,7 @@ class Sphere : public Object {
 	Sphere(const Vector &a_center, float a_radius)
 		: center(a_center), radius(a_radius), SqRadius(a_radius * a_radius) {};
 	HitRecord hit(Ray &r) const;
-	AABB GetBoundingBox(void);
+	AABB GetBoundingBox(void) const;
 
   private:
 	Vector center;
@@ -201,8 +201,8 @@ class Sphere : public Object {
 class aaBox : public Object // Axis aligned box: another geometric object
 {
   public:
-	aaBox(Vector &minPoint, Vector &maxPoint);
-	AABB GetBoundingBox(void);
+	aaBox(const Vector &minPoint, const Vector &maxPoint);
+	AABB GetBoundingBox(void) const;
 	HitRecord hit(Ray &r) const;
 
   private:
