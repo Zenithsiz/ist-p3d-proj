@@ -307,8 +307,7 @@ Color rayTracing(
 
 		if (hitObj == NULL) { // No intersected object
 			if (skybox_flg) { // skybox cubemap overrides background color
-				// color_Acc = scene->GetSkyboxColor(ray);
-				color_Acc = (scene->GetBackgroundColor()); // just temporarily
+				color_Acc = scene->GetSkyboxColor(ray);
 			} else {
 				color_Acc = (scene->GetBackgroundColor());
 			}
@@ -320,8 +319,7 @@ Color rayTracing(
 	else if (Accel_Struct == GRID_ACC) { // regular Grid
 		if (!grid_ptr->Traverse(ray, &hitObj, closestHit)) {
 			if (skybox_flg) {
-				// color_Acc = scene->GetSkyboxColor(ray);
-				color_Acc = (scene->GetBackgroundColor()); // just temporarily
+				color_Acc = scene->GetSkyboxColor(ray);
 			} else {
 				color_Acc = (scene->GetBackgroundColor());
 			}
@@ -332,8 +330,7 @@ Color rayTracing(
 	else if (Accel_Struct == BVH_ACC) { // BVH
 		if (!bvh_ptr->Traverse(ray, &hitObj, closestHit)) {
 			if (skybox_flg) {
-				// color_Acc = scene->GetSkyboxColor(ray);
-				color_Acc = (scene->GetBackgroundColor()); // just temporarily
+				color_Acc = scene->GetSkyboxColor(ray);
 			} else {
 				color_Acc = (scene->GetBackgroundColor());
 			}
