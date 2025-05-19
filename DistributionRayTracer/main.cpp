@@ -358,11 +358,18 @@ Color rayTracing(
 					return;
 				}
 
-				auto light_ray = Ray(hitPoint, (light_pos - hitPoint).normalize());
-				for (int i = 0; i < num_objects; i++) {
-					const auto &obj = *scene->getObject(i);
-					auto hit = obj.hit(light_ray);
-					if (hit.isHit) {
+				if (Accel_Struct == NONE) {
+					auto light_ray = Ray(hitPoint, (light_pos - hitPoint).normalize());
+					for (int i = 0; i < num_objects; i++) {
+						const auto &obj = *scene->getObject(i);
+						auto hit = obj.hit(light_ray);
+						if (hit.isHit) {
+							return;
+						}
+					}
+				} else if (Accel_Struct == GRID_ACC) {
+					auto light_ray = Ray(hitPoint, light_pos - hitPoint);
+					if (grid_ptr->Traverse(light_ray)) {
 						return;
 					}
 				}
@@ -413,7 +420,7 @@ Color rayTracing(
 
 		auto reflected_dir = 2 * (incident * N) * N - incident;
 		if (mat.GetTransmittance() == 0.0) {
-			reflected_dir += 0.3 * rnd_unit_sphere();
+			// reflected_dir += 0.3 * rnd_unit_sphere();
 			reflected_dir.normalize();
 		}
 		auto reflected_color = rayTracing(Ray(hitPoint + EPSILON * N, reflected_dir), depth + 1, ior_1, lightSample);
