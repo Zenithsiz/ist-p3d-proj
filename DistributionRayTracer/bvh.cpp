@@ -151,11 +151,17 @@ bool BVH::Traverse(Ray &ray, const Object **hit_obj, HitRecord &hitRec) const {
 			if (lhs_node->getAABB().isInside(ray.origin)) {
 				lhs_t = 0;
 			}
+			if (lhs_t >= closest_hit.t) {
+				lhs_hit = false;
+			}
 
 			float rhs_t;
 			auto rhs_hit = rhs_node->getAABB().hit(ray, rhs_t);
 			if (rhs_node->getAABB().isInside(ray.origin)) {
 				rhs_t = 0;
+			}
+			if (rhs_t >= closest_hit.t) {
+				rhs_hit = false;
 			}
 
 			if (lhs_hit && rhs_hit) {
