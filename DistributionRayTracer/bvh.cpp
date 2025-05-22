@@ -74,20 +74,17 @@ void BVH::build_recursive(unsigned int left_index, unsigned int right_index, BVH
 	std::sort(&this->objects[left_index], &this->objects[right_index], Comparator{sort_dimension});
 
 	// Then find the split index
-	// TODO: The top approach is way too slow, should we speed it up or just use the middlepoint?
-	/*
 	auto aabb_centroid = aabb.centroid();
+	auto aabb_centroid_center = aabb_centroid.getAxisValue(sort_dimension) / 2;
 	auto split_obj = std::partition_point(
-	    &this->objects[left_index],
-	    &this->objects[right_index],
-	    [aabb_centroid, sort_dimension](const auto &obj) {
-	        return obj->getCentroid().getAxisValue(sort_dimension) < aabb_centroid.getAxisValue(sort_dimension) / 2;
-	    }
+		&this->objects[left_index],
+		&this->objects[right_index],
+		[aabb_centroid_center, sort_dimension](const auto &obj) {
+			return obj.bb.centroid().getAxisValue(sort_dimension) < aabb_centroid_center;
+		}
 	);
 	unsigned int split_idx = std::distance(&this->objects[left_index], split_obj);
 	split_idx = std::clamp(split_idx, left_index + this->Threshold, right_index - this->Threshold);
-	*/
-	unsigned int split_idx = (left_index + right_index) / 2;
 
 	// Make this node a non-leaf
 	node.makeNode(nodes.size());
