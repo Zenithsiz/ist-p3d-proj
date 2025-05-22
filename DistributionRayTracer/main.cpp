@@ -372,6 +372,11 @@ Color rayTracing(
 					if (grid_ptr->Traverse(light_ray)) {
 						return;
 					}
+				} else if (Accel_Struct == BVH_ACC) {
+					auto light_ray = Ray(hitPoint, light_pos - hitPoint);
+					if (bvh_ptr->Traverse(light_ray)) {
+						return;
+					}
 				}
 
 				diffusive_color += mat.GetDiffColor() * mat.GetDiffuse() * max(N * l, 0.0);

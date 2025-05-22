@@ -74,29 +74,29 @@ class BVH {
 		void setAABB(AABB &bbox_);
 		void makeLeaf(unsigned int index_, unsigned int n_objs_);
 		void makeNode(unsigned int left_index_);
-		bool isLeaf() {
+		bool isLeaf() const {
 			return leaf;
 		}
-		unsigned int getIndex() {
+		unsigned int getIndex() const {
 			return index;
 		}
-		unsigned int getNObjs() {
+		unsigned int getNObjs() const {
 			return n_objs;
 		}
-		AABB &getAABB() {
+		const AABB &getAABB() const {
 			return bbox;
 		};
 	};
 
   private:
-	int Threshold = 2;
+	unsigned int Threshold = 2;
 	vector<Object *> objects;
-	vector<BVH::BVHNode *> nodes;
+	vector<BVH::BVHNode> nodes;
 
 	struct StackItem {
-		BVHNode *ptr;
+		const BVHNode *ptr;
 		float t;
-		StackItem(BVHNode *_ptr, float _t) : ptr(_ptr), t(_t) {}
+		StackItem(const BVHNode *_ptr, float _t) : ptr(_ptr), t(_t) {}
 	};
 
 	// stack<StackItem> hit_stack;  just declare it in the traverse procedure in order to be parallelized with OMP
@@ -106,7 +106,7 @@ class BVH {
 	int getNumObjects();
 
 	void Build(vector<Object *> &objects);
-	void build_recursive(int left_index, int right_index, BVHNode *node);
+	void build_recursive(unsigned int left_index, unsigned int right_index, BVHNode &node);
 	bool Traverse(Ray &ray, const Object **hit_obj, HitRecord &hitRec) const;
 	bool Traverse(Ray &ray) const;
 };

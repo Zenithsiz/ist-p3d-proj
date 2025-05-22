@@ -15,7 +15,7 @@ class Vector {
 
 	float length();
 
-	float getAxisValue(int axis);
+	float getAxisValue(int axis) const;
 
 	Vector &normalize();
 	Vector operator-() const {
