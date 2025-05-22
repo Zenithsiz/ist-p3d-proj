@@ -194,8 +194,7 @@ bool BVH::Traverse(Ray &ray) const { // shadow ray with length
 	thread_local std::vector<BVH::StackItem> hit_stack;
 	hit_stack.clear();
 
-	// TODO: We're not using length, should we?
-	double length = ray.direction.length(); // distance between light and intersection point
+	double ray_length = ray.direction.length(); // distance between light and intersection point
 	ray.direction.normalize();
 
 	const BVHNode *currentNode = &nodes[0];
@@ -211,7 +210,7 @@ bool BVH::Traverse(Ray &ray) const { // shadow ray with length
 			for (unsigned int i = start_idx; i < end_idx; i++) {
 				const auto &obj = this->objects[i];
 				auto curHitRec = obj->hit(ray);
-				if (curHitRec.isHit) {
+				if (curHitRec.isHit && curHitRec.t < ray_length) {
 					return true;
 				}
 			}
