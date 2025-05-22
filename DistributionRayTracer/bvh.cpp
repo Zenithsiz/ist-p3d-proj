@@ -41,10 +41,10 @@ void BVH::Build(vector<Object *> &objs) {
 	this->nodes.reserve(2 * objs.size() - 1);
 
 	// Calculate the world hit box
-	for (Object *obj: objs) {
+	for (const Object *obj: objs) {
 		AABB bbox = obj->GetBoundingBox();
 		world_bbox.extend(bbox);
-		objects.push_back(obj);
+		objects.push_back({obj, bbox});
 	}
 	world_bbox.min.x -= EPSILON;
 	world_bbox.min.y -= EPSILON;
@@ -101,7 +101,7 @@ void BVH::build_recursive(unsigned int left_index, unsigned int right_index, BVH
 	Vector min = Vector(FLT_MAX, FLT_MAX, FLT_MAX), max = Vector(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 	AABB lhs_bbox = AABB(min, max);
 	for (unsigned int i = left_index; i < split_idx; i++) {
-		AABB bbox = this->objects[i]->GetBoundingBox();
+		const AABB &bbox = this->objects[i].bb;
 		lhs_bbox.extend(bbox);
 	}
 	lhs.setAABB(lhs_bbox);
@@ -110,7 +110,7 @@ void BVH::build_recursive(unsigned int left_index, unsigned int right_index, BVH
 	// Then build right
 	AABB rhs_bbox = AABB(min, max);
 	for (unsigned int i = split_idx; i < right_index; i++) {
-		AABB bbox = this->objects[i]->GetBoundingBox();
+		const AABB &bbox = this->objects[i].bb;
 		rhs_bbox.extend(bbox);
 	}
 	rhs.setAABB(rhs_bbox);
@@ -138,10 +138,10 @@ bool BVH::Traverse(Ray &ray, const Object **hit_obj, HitRecord &hitRec) const {
 			auto end_idx = start_idx + currentNode->getNObjs();
 			for (unsigned int i = start_idx; i < end_idx; i++) {
 				const auto &obj = this->objects[i];
-				auto curHitRec = obj->hit(ray);
+				auto curHitRec = obj.obj->hit(ray);
 				if (curHitRec.isHit && curHitRec.t < closest_hit.t) {
 					closest_hit = curHitRec;
-					*hit_obj = obj;
+					*hit_obj = obj.obj;
 				}
 			}
 		} else {
@@ -214,7 +214,7 @@ bool BVH::Traverse(Ray &ray) const { // shadow ray with length
 			auto end_idx = start_idx + currentNode->getNObjs();
 			for (unsigned int i = start_idx; i < end_idx; i++) {
 				const auto &obj = this->objects[i];
-				auto curHitRec = obj->hit(ray);
+				auto curHitRec = obj.obj->hit(ray);
 				if (curHitRec.isHit && curHitRec.t < ray_length) {
 					return true;
 				}

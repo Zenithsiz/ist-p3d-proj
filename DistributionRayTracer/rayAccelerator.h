@@ -50,13 +50,18 @@ class Grid {
 
 /*********************************BVH*****************************************************************/
 class BVH {
+	struct BVHObj {
+		const Object *obj;
+		AABB bb;
+	};
+
 	class Comparator {
 	  public:
 		int dimension;
 
-		bool operator()(Object *a, Object *b) {
-			float ca = a->getCentroid().getAxisValue(dimension);
-			float cb = b->getCentroid().getAxisValue(dimension);
+		bool operator()(const BVHObj &a, const BVHObj &b) {
+			float ca = a.bb.centroid().getAxisValue(dimension);
+			float cb = b.bb.centroid().getAxisValue(dimension);
 			return ca < cb;
 		}
 	};
@@ -90,7 +95,8 @@ class BVH {
 
   private:
 	unsigned int Threshold = 2;
-	vector<Object *> objects;
+	vector<BVHObj> objects;
+
 	vector<BVH::BVHNode> nodes;
 
   public:
