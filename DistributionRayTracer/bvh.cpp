@@ -151,13 +151,24 @@ bool BVH::Traverse(Ray &ray, const Object **hit_obj, HitRecord &hitRec) const {
 
 			float lhs_t;
 			auto lhs_hit = lhs_node->getAABB().hit(ray, lhs_t);
+			if (lhs_node->getAABB().isInside(ray.origin)) {
+				lhs_t = 0;
+			}
 
 			float rhs_t;
 			auto rhs_hit = rhs_node->getAABB().hit(ray, rhs_t);
+			if (rhs_node->getAABB().isInside(ray.origin)) {
+				rhs_t = 0;
+			}
 
 			if (lhs_hit && rhs_hit) {
-				hit_stack.push_back(rhs_node);
-				currentNode = lhs_node;
+				if (lhs_t < rhs_t) {
+					hit_stack.push_back(rhs_node);
+					currentNode = lhs_node;
+				} else {
+					hit_stack.push_back(lhs_node);
+					currentNode = rhs_node;
+				}
 				continue;
 			} else if (lhs_hit) {
 				currentNode = lhs_node;
