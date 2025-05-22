@@ -93,14 +93,6 @@ class BVH {
 	vector<Object *> objects;
 	vector<BVH::BVHNode> nodes;
 
-	struct StackItem {
-		const BVHNode *ptr;
-		float t;
-		StackItem(const BVHNode *_ptr, float _t) : ptr(_ptr), t(_t) {}
-	};
-
-	// stack<StackItem> hit_stack;  just declare it in the traverse procedure in order to be parallelized with OMP
-
   public:
 	BVH(void);
 	int getNumObjects();

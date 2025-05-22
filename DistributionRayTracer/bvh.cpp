@@ -122,7 +122,7 @@ void BVH::build_recursive(unsigned int left_index, unsigned int right_index, BVH
 }
 
 bool BVH::Traverse(Ray &ray, const Object **hit_obj, HitRecord &hitRec) const {
-	thread_local std::vector<BVH::StackItem> hit_stack;
+	thread_local std::vector<const BVH::BVHNode *> hit_stack;
 	hit_stack.clear();
 
 	const auto *currentNode = &nodes[0];
@@ -151,18 +151,12 @@ bool BVH::Traverse(Ray &ray, const Object **hit_obj, HitRecord &hitRec) const {
 
 			float lhs_t;
 			auto lhs_hit = lhs_node->getAABB().hit(ray, lhs_t);
-			if (lhs_node->getAABB().isInside(ray.origin)) {
-				lhs_t = 0;
-			}
 
 			float rhs_t;
 			auto rhs_hit = rhs_node->getAABB().hit(ray, rhs_t);
-			if (rhs_node->getAABB().isInside(ray.origin)) {
-				rhs_t = 0;
-			}
 
 			if (lhs_hit && rhs_hit) {
-				hit_stack.emplace_back(rhs_node, rhs_t);
+				hit_stack.push_back(rhs_node);
 				currentNode = lhs_node;
 				continue;
 			} else if (lhs_hit) {
@@ -178,7 +172,7 @@ bool BVH::Traverse(Ray &ray, const Object **hit_obj, HitRecord &hitRec) const {
 			break;
 		}
 
-		currentNode = hit_stack.back().ptr;
+		currentNode = hit_stack.back();
 		hit_stack.pop_back();
 	}
 
@@ -191,7 +185,7 @@ bool BVH::Traverse(Ray &ray, const Object **hit_obj, HitRecord &hitRec) const {
 }
 
 bool BVH::Traverse(Ray &ray) const { // shadow ray with length
-	thread_local std::vector<BVH::StackItem> hit_stack;
+	thread_local std::vector<const BVH::BVHNode *> hit_stack;
 	hit_stack.clear();
 
 	double ray_length = ray.direction.length(); // distance between light and intersection point
@@ -221,18 +215,12 @@ bool BVH::Traverse(Ray &ray) const { // shadow ray with length
 
 			float lhs_t;
 			auto lhs_hit = lhs_node->getAABB().hit(ray, lhs_t);
-			if (lhs_node->getAABB().isInside(ray.origin)) {
-				lhs_t = 0;
-			}
 
 			float rhs_t;
 			auto rhs_hit = rhs_node->getAABB().hit(ray, rhs_t);
-			if (rhs_node->getAABB().isInside(ray.origin)) {
-				rhs_t = 0;
-			}
 
 			if (lhs_hit && rhs_hit) {
-				hit_stack.emplace_back(rhs_node, rhs_t);
+				hit_stack.push_back(rhs_node);
 				currentNode = lhs_node;
 				continue;
 			} else if (lhs_hit) {
@@ -248,7 +236,7 @@ bool BVH::Traverse(Ray &ray) const { // shadow ray with length
 			break;
 		}
 
-		currentNode = hit_stack.back().ptr;
+		currentNode = hit_stack.back();
 		hit_stack.pop_back();
 	}
 
