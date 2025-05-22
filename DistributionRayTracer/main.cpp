@@ -391,7 +391,7 @@ Color rayTracing(
 			}
 
 			case QUAD: {
-				if (spp == 0) {
+				if (spp == 0 && !Progressive_flg) {
 					unsigned int n = sqrt(light.gridRes);
 					for (size_t y = 0; y < n; y++) {
 						for (size_t x = 0; x < n; x++) {
