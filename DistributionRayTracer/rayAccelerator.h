@@ -2,6 +2,7 @@
 #define ACCELERATOR_H
 
 #include "scene.h"
+#include "vector.h"
 #include <cmath>
 
 using namespace std;
@@ -53,6 +54,7 @@ class BVH {
 	struct BVHObj {
 		const Object *obj;
 		AABB bb;
+		Vector centroid;
 	};
 
 	class Comparator {
@@ -60,8 +62,8 @@ class BVH {
 		int dimension;
 
 		bool operator()(const BVHObj &a, const BVHObj &b) {
-			float ca = a.bb.centroid().getAxisValue(dimension);
-			float cb = b.bb.centroid().getAxisValue(dimension);
+			float ca = a.centroid.getAxisValue(dimension);
+			float cb = b.centroid.getAxisValue(dimension);
 			return ca < cb;
 		}
 	};
@@ -72,7 +74,7 @@ class BVH {
 		float aabb_centroid_center;
 
 		bool operator()(const BVHObj &obj) {
-			return obj.bb.centroid().getAxisValue(this->dimension) < this->aabb_centroid_center;
+			return obj.centroid.getAxisValue(this->dimension) < this->aabb_centroid_center;
 		}
 	};
 

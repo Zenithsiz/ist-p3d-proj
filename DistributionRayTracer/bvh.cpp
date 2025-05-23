@@ -45,7 +45,7 @@ void BVH::Build(vector<Object *> &objs) {
 	for (const Object *obj: objs) {
 		AABB bbox = obj->GetBoundingBox();
 		world_bbox.extend(bbox);
-		objects.push_back({obj, bbox});
+		objects.push_back({obj, bbox, bbox.centroid()});
 	}
 	world_bbox.min.x -= EPSILON;
 	world_bbox.min.y -= EPSILON;
