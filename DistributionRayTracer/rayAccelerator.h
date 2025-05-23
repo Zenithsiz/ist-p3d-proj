@@ -66,6 +66,16 @@ class BVH {
 		}
 	};
 
+	class SplitPred {
+	  public:
+		int dimension;
+		float aabb_centroid_center;
+
+		bool operator()(const BVHObj &obj) {
+			return obj.bb.centroid().getAxisValue(this->dimension) < this->aabb_centroid_center;
+		}
+	};
+
 	class BVHNode {
 	  private:
 		AABB bbox;

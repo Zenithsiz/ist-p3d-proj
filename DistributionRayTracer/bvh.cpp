@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cfloat>
 #include <cmath>
+#include <iterator>
 
 using namespace std;
 
@@ -75,16 +76,20 @@ void BVH::build_recursive(unsigned int left_index, unsigned int right_index, BVH
 
 	// Then find the split index
 	auto aabb_centroid = aabb.centroid();
-	auto aabb_centroid_center = aabb_centroid.getAxisValue(sort_dimension) / 2;
-	auto split_obj = std::partition_point(
-		&this->objects[left_index],
-		&this->objects[right_index],
-		[aabb_centroid_center, sort_dimension](const auto &obj) {
-			return obj.bb.centroid().getAxisValue(sort_dimension) < aabb_centroid_center;
-		}
-	);
-	unsigned int split_idx = std::distance(&this->objects[left_index], split_obj);
-	split_idx = std::clamp(split_idx, left_index + this->Threshold, right_index - this->Threshold);
+	auto aabb_centroid_center = aabb_centroid.getAxisValue(sort_dimension);
+	unsigned int split_idx;
+	if (left_index + this->Threshold >= right_index - this->Threshold) {
+		split_idx = (left_index + right_index) / 2;
+	} else {
+		split_idx = std::distance(
+			&this->objects[0],
+			std::partition_point(
+				&this->objects[left_index + this->Threshold],
+				&this->objects[right_index - this->Threshold],
+				SplitPred{sort_dimension, aabb_centroid_center}
+			)
+		);
+	}
 
 	// Make this node a non-leaf
 	node.makeNode(nodes.size());
