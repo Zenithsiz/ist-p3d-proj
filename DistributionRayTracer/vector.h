@@ -18,9 +18,7 @@ class Vector {
 	float getAxisValue(int axis) const;
 
 	Vector &normalize();
-	Vector operator-() const {
-		return Vector(-x, -y, -z);
-	}
+	Vector operator-() const;
 	Vector operator=(const Vector &v);
 	Vector operator+(const Vector &v) const;
 	Vector operator-(const Vector &v) const;
