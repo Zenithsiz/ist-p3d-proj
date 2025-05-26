@@ -4,6 +4,7 @@
 #include <cfloat>
 #include <cmath>
 #include <iostream>
+
 using namespace std;
 
 class Vector {
@@ -15,24 +16,22 @@ class Vector {
 
 	float length();
 
-	float getAxisValue(int axis) const;
+	float getAxisValue(int axis);
 
 	Vector &normalize();
-	Vector operator-() const;
 	Vector operator=(const Vector &v);
-	Vector operator+(const Vector &v) const;
-	Vector operator-(const Vector &v) const;
-	Vector operator*(float f) const;
-	float operator*(const Vector &v) const; // inner product
-	Vector operator/(float f) const;
-	Vector operator%(const Vector &v) const; // external product
+	Vector operator+(const Vector &v);
+	Vector operator-(const Vector &v);
+	Vector operator*(float f);
+	float operator*(const Vector &v); // inner product
+	Vector operator/(float f);
+	Vector operator%(const Vector &v); // external product
 	Vector &operator-=(const Vector &v);
 	Vector &operator-=(const float v);
 	Vector &operator*=(const float v);
 	Vector &operator+=(const float v);
-	Vector &operator+=(const Vector &v);
-	bool operator!=(const Vector &v) const;
-	bool operator==(const Vector &v) const;
+	bool operator!=(const Vector &v);
+	bool operator==(const Vector &v);
 
 	float x;
 	float y;
@@ -42,7 +41,5 @@ class Vector {
 		return s >> v.x >> v.y >> v.z;
 	}
 };
-
-Vector operator*(double f, const Vector &v);
 
 #endif

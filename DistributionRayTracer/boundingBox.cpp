@@ -38,12 +38,12 @@ AABB::~AABB() {}
 // --------------------------------------------------------------------- inside
 // used to test if a ray starts inside a bbox
 
-bool AABB::isInside(const Vector &p) const {
+bool AABB::isInside(const Vector &p) {
 	return ((p.x > min.x && p.x < max.x) && (p.y > min.y && p.y < max.y) && (p.z > min.z && p.z < max.z));
 }
 
 // --------------------------------------------------------------------- compute centroid
-Vector AABB::centroid(void) const {
+Vector AABB::centroid(void) {
 	return (min + max) / 2;
 }
 
@@ -72,7 +72,7 @@ void AABB::extend(AABB box) {
 
 // --------------------------------------------------------------------- AABB intersection
 
-bool AABB::hit(const Ray &ray, float &t) const {
+bool AABB::hit(const Ray &ray, float &t) {
 	double t0, t1;
 
 	float ox = ray.origin.x;

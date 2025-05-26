@@ -12,8 +12,8 @@ class AABB {
 	AABB(const AABB &bbox);
 	AABB operator=(const AABB &rhs);
 
-	bool isInside(const Vector &p) const;
-	bool hit(const Ray &r, float &t) const;
-	Vector centroid(void) const;
+	bool isInside(const Vector &p);
+	bool hit(const Ray &r, float &t);
+	Vector centroid(void);
 	void extend(AABB box);
 };

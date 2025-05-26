@@ -84,7 +84,7 @@ int RES_X, RES_Y;
 
 int WindowHandle = 0;
 
-bool AA = true;
+bool AA = false;
 unsigned int spp; // samples per pixel
 bool DOF = false;
 bool SoftShadows = false;
@@ -255,8 +255,6 @@ ILuint saveImgFile(const char *filename) {
 /////////////////////////////////////////////////////////////////////// CALLBACKS
 
 void timer(int value) {
-	(void)value;
-
 	FramesPerSecond = FPS;
 	if (!Progressive_flg) {
 		std::ostringstream oss;
@@ -278,9 +276,9 @@ Color rayTracing(
 {
 	Color color_Acc; // Class constructor init the color with zero
 
-	const Object *hitObj = NULL; // nearest object
-	HitRecord closestHit;        // isHit=false and t=FLT_MAX
-	Vector hitPoint;             // closest hit point
+	Object *hitObj = NULL; // nearest object
+	HitRecord closestHit;  // isHit=false and t=FLT_MAX
+	Vector hitPoint;       // closest hit point
 	Vector N;
 	HitRecord auxRec;
 	bool skybox_flg;
@@ -288,26 +286,19 @@ Color rayTracing(
 	skybox_flg = scene->GetSkyBoxFlg();
 	Accel_Struct = scene->GetAccelStruct(); // Type of acceleration data structure
 
-	int num_objects = scene->getNumObjects();
-
 	if (Accel_Struct == NONE) { // no acceleration
 		/* Get the closest intersection*/
-		for (int i = 0; i < num_objects; i++) {
-			const auto &obj = *scene->getObject(i);
-			auto hit = obj.hit(ray);
-			if (!hit.isHit) {
-				continue;
-			}
+		int num_objects = scene->getNumObjects();
+		Object *obj = NULL;
 
-			if (!closestHit.isHit || hit.t < closestHit.t) {
-				closestHit = hit;
-				hitObj = &obj;
-			}
+		for (int i = 0; i < num_objects; i++) {
+			// COMPLETE THE CODE
 		}
 
 		if (hitObj == NULL) { // No intersected object
 			if (skybox_flg) { // skybox cubemap overrides background color
-				color_Acc = scene->GetSkyboxColor(ray);
+				// color_Acc = scene->GetSkyboxColor(ray);
+				color_Acc = (scene->GetBackgroundColor()); // just temporarily
 			} else {
 				color_Acc = (scene->GetBackgroundColor());
 			}
@@ -319,7 +310,8 @@ Color rayTracing(
 	else if (Accel_Struct == GRID_ACC) { // regular Grid
 		if (!grid_ptr->Traverse(ray, &hitObj, closestHit)) {
 			if (skybox_flg) {
-				color_Acc = scene->GetSkyboxColor(ray);
+				// color_Acc = scene->GetSkyboxColor(ray);
+				color_Acc = (scene->GetBackgroundColor()); // just temporarily
 			} else {
 				color_Acc = (scene->GetBackgroundColor());
 			}
@@ -330,7 +322,8 @@ Color rayTracing(
 	else if (Accel_Struct == BVH_ACC) { // BVH
 		if (!bvh_ptr->Traverse(ray, &hitObj, closestHit)) {
 			if (skybox_flg) {
-				color_Acc = scene->GetSkyboxColor(ray);
+				// color_Acc = scene->GetSkyboxColor(ray);
+				color_Acc = (scene->GetBackgroundColor()); // just temporarily
 			} else {
 				color_Acc = (scene->GetBackgroundColor());
 			}
@@ -340,147 +333,11 @@ Color rayTracing(
 
 	hitPoint = ray.origin + ray.direction * closestHit.t;
 	N = closestHit.normal;
-	hitPoint += N * EPSILON;
-	const auto &mat = *hitObj->GetMaterial();
 
 	// CALCULATE THE COLOR OF THE PIXEL
-	for (int i = 0; i < num_lights; i++) {
-		const auto &light = *scene->getLight(i);
-
-		Color diffusive_color;
-		Color specular_color;
-
-		// Handles a single light
-		auto handle_light =
-			[ray, hitPoint, num_objects, N, &diffusive_color, &specular_color, mat, light](auto light_pos) {
-				auto l = (light_pos - hitPoint).normalize();
-				if (l * N <= 0) {
-					return;
-				}
-
-				if (Accel_Struct == NONE) {
-					auto light_ray = Ray(hitPoint, (light_pos - hitPoint).normalize());
-					for (int i = 0; i < num_objects; i++) {
-						const auto &obj = *scene->getObject(i);
-						auto hit = obj.hit(light_ray);
-						if (hit.isHit) {
-							return;
-						}
-					}
-				} else if (Accel_Struct == GRID_ACC) {
-					auto light_ray = Ray(hitPoint, light_pos - hitPoint);
-					if (grid_ptr->Traverse(light_ray)) {
-						return;
-					}
-				} else if (Accel_Struct == BVH_ACC) {
-					auto light_ray = Ray(hitPoint, light_pos - hitPoint);
-					if (bvh_ptr->Traverse(light_ray)) {
-						return;
-					}
-				}
-
-				diffusive_color += mat.GetDiffColor() * mat.GetDiffuse() * max(N * l, 0.0);
-				auto h = (l - ray.direction).normalize();
-				specular_color += light.emission * mat.GetSpecular() * powf(max(h * N, 0.0), mat.GetShine());
-			};
-
-		switch (light.type) {
-			case PUNCTUAL: {
-				handle_light(light.position);
-				break;
-			}
-
-			case QUAD: {
-				if (spp == 0 && !Progressive_flg) {
-					unsigned int n = sqrt(light.gridRes);
-					for (size_t y = 0; y < n; y++) {
-						for (size_t x = 0; x < n; x++) {
-							auto lightSample = Vector((float)x / (n - 1), (float)y / (n - 1), 0.0);
-							auto light_pos = light.getAreaLightPoint(lightSample);
-							handle_light(light_pos);
-						}
-					}
-
-					diffusive_color /= light.gridRes;
-					specular_color /= light.gridRes;
-				} else {
-					auto light_pos = light.getAreaLightPoint(lightSample);
-					handle_light(light_pos);
-				}
-
-				break;
-			}
-		}
-
-		color_Acc += diffusive_color + specular_color;
-	}
-
-	if (depth >= MAX_DEPTH) {
-		return color_Acc.clamp();
-	}
-
-	Color reflected_color_final;
-	if (mat.GetReflection() > 0) {
-		Vector incident = -ray.direction; // reverse the direction
-
-		auto reflected_dir = 2 * (incident * N) * N - incident;
-		if (mat.GetTransmittance() == 0.0) {
-			// reflected_dir += 0.3 * rnd_unit_sphere();
-			reflected_dir.normalize();
-		}
-		auto reflected_color = rayTracing(Ray(hitPoint + EPSILON * N, reflected_dir), depth + 1, ior_1, lightSample);
-
-		auto reflected_coeff = mat.GetReflection();
-
-		reflected_color_final = reflected_color * reflected_coeff * mat.GetSpecColor();
-	}
-
-	Color transparent_color_final;
-	float fresnel = 1.0;
-	if (mat.GetTransmittance() == 1.0) {
-		bool is_inside = ray.direction * N > 0;
-		auto ior_2 = is_inside ? 1.0 : mat.GetRefrIndex();
-		auto N_s = is_inside ? -N : N;
-
-		auto v = -ray.direction;
-		auto v_t = (v * N_s) * N_s - v;
-		auto sin_incident = v_t.length();
-		auto cos_incident = sqrt(1.0 - sin_incident * sin_incident);
-
-		auto sin_theta = ior_1 / ior_2 * sin_incident;
-
-		if (abs(sin_theta) <= 1.0) {
-			auto cos_theta = sqrt(1.0 - sin_theta * sin_theta);
-			auto t = v_t.normalize();
-
-			auto r0 = pow((ior_1 - ior_2) / (ior_1 + ior_2), 2.0);
-			auto fresnel_cos = is_inside ? cos_theta : cos_incident;
-			fresnel = r0 + (1.0 - r0) * pow(1 - fresnel_cos, 5.0);
-
-			auto transparent_dir = sin_theta * t - cos_theta * N_s;
-			auto transparent_color =
-				rayTracing(Ray(hitPoint - 2.0 * EPSILON * N_s, transparent_dir), depth + 1, ior_2, lightSample);
-
-			auto refraction_color = Color(1.0, 1.0, 1.0) - mat.GetDiffColor();
-			auto attenuation = is_inside ? (-refraction_color * closestHit.t).exp_() : Color(1.0, 1.0, 1.0);
-
-			transparent_color_final = transparent_color * attenuation;
-		}
-	}
-
-	color_Acc += transparent_color_final * (1.0 - fresnel);
-	color_Acc += reflected_color_final * fresnel;
 
 	return color_Acc.clamp();
 }
-
-struct Vector2 {
-	float x;
-	float y;
-};
-
-thread_local std::vector<Vector2> pixel_jitters;
-thread_local std::vector<Vector2> color_jitters;
 
 // Render function by primary ray casting from the eye towards the scene's objects
 void renderScene() {
@@ -503,7 +360,8 @@ void renderScene() {
 					int index_col = 0;
 					Color color;
 					Ray ray;
-					Vector pixel_sample; // viewport coordinates
+					Vector pixel_sample;                            // viewport coordinates
+					Vector light_sample = Vector(0.0f, 0.0f, 0.0f); // sample in Light coordinates
 
 					pixel_sample.x = x + rand_double();
 					pixel_sample.y = y + rand_double();
@@ -519,8 +377,7 @@ void renderScene() {
 						ray = scene->GetCamera()->PrimaryRay(lens_sample, pixel_sample);
 					}
 					/////////PROGRAM THE FOLLOWING FUNCTION//////////////////////
-					auto lightSample = Vector(rand_float(), rand_float(), 0.0f);
-					color = rayTracing(ray, 1, 1.0, lightSample);
+					color = rayTracing(ray, 1, 1.0, Vector(rand_float(), rand_float(), 0.0f));
 
 					index_pos = 2 * (x + RES_X * y);
 					vertices[index_pos] = (float)x;
@@ -567,53 +424,29 @@ void renderScene() {
 				int index_pos = 0;
 				int index_col = 0;
 				Ray ray;
-				Vector pixel_sample; // viewport coordinates
+				Vector pixel_sample;                            // viewport coordinates
+				Vector light_sample = Vector(0.0f, 0.0f, 0.0f); // sample in Light coordinates
 
 				////// ZONE B.1  -  Distribution Ray Tracer: pixel, area light and lens supersampling with jittering (or
 				/// stratified)
 				if (AA) {
-					int n = (int)sqrt(spp); // spp should be a perfect square (like 4, 9, 16, 25)
-
-					pixel_jitters.resize(spp);
-					color_jitters.resize(spp);
-
-					int cur_sample = 0;
-					for (int py = 0; py < n; py++) {
-						for (int px = 0; px < n; px++) {
-							pixel_jitters[cur_sample].x = (px + rand_float()) / n;
-							pixel_jitters[cur_sample].y = (py + rand_float()) / n;
-
-							color_jitters[cur_sample].x = (px + rand_float()) / n;
-							color_jitters[cur_sample].y = (py + rand_float()) / n;
-
-							cur_sample += 1;
-						}
-					}
-
-					for (unsigned int i = spp - 1; i > 0; i--) {
-						unsigned int j = rand() % (i + 1);
-						if (i != j) {
-							std::swap(color_jitters[i], color_jitters[j]);
-						}
-					}
-
-					for (unsigned int cur_sample = 0; cur_sample < spp; cur_sample++) {
-						// Anti-aliasing with the jittered method (use the spp parameter in P3F scenes)
-						pixel_sample.x = x + pixel_jitters[cur_sample].x;
-						pixel_sample.y = y + pixel_jitters[cur_sample].y;
-
+#pragma omp parallel for
+					for (int p = 0; p < spp; p++) {
 						if (!DOF) {
 							ray = scene->GetCamera()->PrimaryRay(pixel_sample);
-						} else {
-							Vector lens_sample = rnd_unit_disk() * scene->GetCamera()->GetAperture() / 2.0f;
+						} else { // sample_unit_disk() returns [-1 1] and aperture is the diameter of the lens
+
+							Vector lens_sample = rnd_unit_disk() * scene->GetCamera()->GetAperture() /
+							                     2.0f; // lens sample in Camera coordinates
+
+							/////////PROGRAM THE FOLLOWING FUNCTION//////////////////////
 							ray = scene->GetCamera()->PrimaryRay(lens_sample, pixel_sample);
 						}
 
-						Vector light_sample = Vector(color_jitters[cur_sample].x, color_jitters[cur_sample].y, 0.0f);
+						/////////PROGRAM THE FOLLOWING FUNCTION//////////////////////
 						color += rayTracing(ray, 1, 1.0, light_sample);
 					}
-
-					color /= spp; // average the samples
+					color *= 1.0 / ((float)spp);
 				}
 
 				// ZONE B.2  - Whitted ray tracer  (without antialiasing)
@@ -625,8 +458,6 @@ void renderScene() {
 					/////////PROGRAM THE FOLLOWING FUNCTION//////////////////////
 					Ray ray1 = scene->GetCamera()->PrimaryRay(pixel_sample);
 					/////////PROGRAM THE FOLLOWING FUNCTION//////////////////////
-
-					Vector light_sample = Vector(0.0, 0.0, 0.0f);
 					color = rayTracing(ray1, 1, 1.0, light_sample); // light_sample is a dummy variable in this case,
 				}
 
@@ -694,9 +525,6 @@ void reshape(int w, int h) {
 }
 
 void processKeys(unsigned char key, int xx, int yy) {
-	(void)xx;
-	(void)yy;
-
 	switch (key) {
 
 		case 27: glutLeaveMainLoop(); break;
@@ -765,8 +593,8 @@ void processMouseButtons(int button, int state, int xx, int yy) {
 void processMouseMotion(int xx, int yy) {
 
 	int deltaX, deltaY;
-	float alphaAux = 0.0, betaAux = 0.0;
-	float rAux = 0.0;
+	float alphaAux, betaAux;
+	float rAux;
 
 	deltaX = -xx + startX;
 	deltaY = yy - startY;
@@ -805,9 +633,6 @@ void processMouseMotion(int xx, int yy) {
 }
 
 void mouseWheel(int wheel, int direction, int x, int y) {
-	(void)wheel;
-	(void)x;
-	(void)y;
 
 	r += direction * 0.1f;
 	if (r < 0.1f) {
@@ -844,7 +669,6 @@ void setupGLEW() {
 		exit(EXIT_FAILURE);
 	}
 	GLenum err_code = glGetError();
-	(void)err_code;
 	printf("Vendor: %s\n", glGetString(GL_VENDOR));
 	printf("Renderer: %s\n", glGetString(GL_RENDERER));
 	printf("Version: %s\n", glGetString(GL_VERSION));
@@ -901,11 +725,11 @@ void init_scene(void) {
 			cout << "Input the Scene Name: ";
 			cin >> input_user;
 			strncpy(scene_name, scenes_dir, sizeof(scene_name));
-			strncat(scene_name, input_user, sizeof(scene_name) - strlen(scene_name) - 1);
+			strncat(scene_name, input_user, sizeof(scene_name));
 
 			ifstream file(scene_name, ios::in);
 			if (file.fail()) {
-				cout << "\nError opening P3F file " << scene_name << ": " << strerror(errno) << endl;
+				printf("\nError opening P3F file.\n");
 			} else {
 				break;
 			}
@@ -1007,7 +831,7 @@ int main(int argc, char *argv[]) {
 				delete (bvh_ptr);
 			}
 			free(img_Data);
-			ch = getchar();
+			ch = getc(stdin);
 		} while ((toupper(ch) == 'Y'));
 	}
 

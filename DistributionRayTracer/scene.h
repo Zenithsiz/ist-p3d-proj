@@ -4,6 +4,7 @@
 #include <IL/il.h>
 #include <cmath>
 #include <vector>
+
 using namespace std;
 
 #include "boundingBox.h"
@@ -32,8 +33,8 @@ struct HitRecord {
 class Material {
   public:
 	Material()
-		: m_diffColor(Color(0.2f, 0.2f, 0.2f)), m_specColor(Color(1.0f, 1.0f, 1.0f)), m_Refl(1.0f), m_T(0.0f),
-		  m_Diff(0.2f), m_Shine(20), m_Spec(0.8f), m_RIndex(1.0f) {};
+		: m_diffColor(Color(0.2f, 0.2f, 0.2f)), m_Diff(0.2f), m_specColor(Color(1.0f, 1.0f, 1.0f)), m_Spec(0.8f),
+		  m_Shine(20), m_Refl(1.0f), m_T(0.0f), m_RIndex(1.0f) {};
 
 	Material(const Color &c, float Kd, const Color &cs, float Ks, float Shine, float T, float ior) {
 		m_diffColor = c;
@@ -49,13 +50,13 @@ class Material {
 	void SetDiffColor(Color &a_Color) {
 		m_diffColor = a_Color;
 	}
-	Color GetDiffColor() const {
+	Color GetDiffColor() {
 		return m_diffColor;
 	}
 	void SetSpecColor(Color &a_Color) {
 		m_specColor = a_Color;
 	}
-	Color GetSpecColor() const {
+	Color GetSpecColor() {
 		return m_specColor;
 	}
 	void SetDiffuse(float a_Diff) {
@@ -73,25 +74,25 @@ class Material {
 	void SetTransmittance(float a_T) {
 		m_T = a_T;
 	}
-	float GetSpecular() const {
+	float GetSpecular() {
 		return m_Spec;
 	}
-	float GetDiffuse() const {
+	float GetDiffuse() {
 		return m_Diff;
 	}
-	float GetShine() const {
+	float GetShine() {
 		return m_Shine;
 	}
-	float GetReflection() const {
+	float GetReflection() {
 		return m_Refl;
 	}
-	float GetTransmittance() const {
+	float GetTransmittance() {
 		return m_T;
 	}
 	void SetRefrIndex(float a_ior) {
 		m_RIndex = a_ior;
 	}
-	float GetRefrIndex() const {
+	float GetRefrIndex() {
 		return m_RIndex;
 	}
 
@@ -116,7 +117,7 @@ class Light {
 	unsigned int
 		gridRes; // resolution of a regular grid; to be used ONLY without Antialiasing; otherwise it should be 0
 
-	Light(const Vector &pos, const Color &col, Vector &v1, Vector &v2, unsigned int grid_res) {
+	Light(Vector &pos, Color &col, Vector &v1, Vector &v2, unsigned int grid_res) {
 		type = QUAD;
 		position = pos; // position of point light or the center in the area light
 		emission = col;
@@ -135,7 +136,7 @@ class Light {
 		emission = col;
 	}
 
-	Vector getAreaLightPoint(const Vector &sample) const // get a point in WC
+	Vector getAreaLightPoint(const Vector &sample) // get a point in WC
 	{
 		return (position + e1 * sample.x + e2 * sample.y);
 	}
@@ -143,14 +144,14 @@ class Light {
 
 class Object {
   public:
-	Material *GetMaterial() const {
+	Material *GetMaterial() {
 		return m_Material;
 	}
 	void SetMaterial(Material *a_Mat) {
 		m_Material = a_Mat;
 	}
-	virtual HitRecord hit(Ray &r) const = 0;
-	virtual AABB GetBoundingBox() const {
+	virtual HitRecord hit(Ray &r) = 0;
+	virtual AABB GetBoundingBox() {
 		return AABB();
 	}
 	Vector getCentroid(void) {
@@ -170,14 +171,14 @@ class Plane : public Object {
 	Plane(Vector &PNc, float Dc);
 	Plane(Vector &P0, Vector &P1, Vector &P2);
 
-	HitRecord hit(Ray &r) const;
+	HitRecord hit(Ray &r);
 };
 
 class Triangle : public Object {
   public:
 	Triangle(Vector &P0, Vector &P1, Vector &P2);
-	AABB GetBoundingBox(void) const;
-	HitRecord hit(Ray &r) const;
+	AABB GetBoundingBox(void);
+	HitRecord hit(Ray &r);
 
   protected:
 	Vector points[3];
@@ -189,9 +190,9 @@ class Triangle : public Object {
 class Sphere : public Object {
   public:
 	Sphere(const Vector &a_center, float a_radius)
-		: center(a_center), radius(a_radius), SqRadius(a_radius * a_radius) {};
-	HitRecord hit(Ray &r) const;
-	AABB GetBoundingBox(void) const;
+		: center(a_center), SqRadius(a_radius * a_radius), radius(a_radius) {};
+	HitRecord hit(Ray &r);
+	AABB GetBoundingBox(void);
 
   private:
 	Vector center;
@@ -201,9 +202,9 @@ class Sphere : public Object {
 class aaBox : public Object // Axis aligned box: another geometric object
 {
   public:
-	aaBox(const Vector &minPoint, const Vector &maxPoint);
-	AABB GetBoundingBox(void) const;
-	HitRecord hit(Ray &r) const;
+	aaBox(Vector &minPoint, Vector &maxPoint);
+	AABB GetBoundingBox(void);
+	HitRecord hit(Ray &r);
 
   private:
 	Vector min;

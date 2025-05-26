@@ -5,7 +5,7 @@ float Vector::length() {
 	return sqrt(x * x + y * y + z * z);
 }
 
-float Vector::getAxisValue(int axis) const {
+float Vector::getAxisValue(int axis) {
 	return (axis == 0) ? x : (axis == 1) ? y : z;
 }
 
@@ -27,36 +27,32 @@ Vector Vector::operator=(const Vector &rhs) {
 	return (*this);
 }
 
-Vector Vector::operator-() const {
-	return Vector(-x, -y, -z);
-}
-
-Vector Vector::operator+(const Vector &v) const {
+Vector Vector::operator+(const Vector &v) {
 	return Vector(x + v.x, y + v.y, z + v.z);
 }
 
-Vector Vector::operator-(const Vector &v) const {
+Vector Vector::operator-(const Vector &v) {
 	return Vector(x - v.x, y - v.y, z - v.z);
 }
 
-Vector Vector::operator*(float f) const {
+Vector Vector::operator*(float f) {
 	return Vector(x * f, y * f, z * f);
 }
 
-float Vector::operator*(const Vector &v) const // inner product
+float Vector::operator*(const Vector &v) // inner product
 {
 	return x * v.x + y * v.y + z * v.z;
 }
 
-Vector Vector::operator/(float f) const {
+Vector Vector::operator/(float f) {
 	return Vector(x / f, y / f, z / f);
 }
 
-bool Vector::operator!=(const Vector &v) const {
+bool Vector::operator!=(const Vector &v) {
 	return (x != v.x && y != v.y && z != v.z);
 }
 
-bool Vector::operator==(const Vector &v) const {
+bool Vector::operator==(const Vector &v) {
 	return (x == v.x && y == v.y && z == v.z);
 }
 
@@ -88,12 +84,6 @@ Vector &Vector::operator+=(const float v) {
 	z += v;
 	return *this;
 }
-Vector &Vector::operator+=(const Vector &v) {
-	x += v.x;
-	y += v.y;
-	z += v.z;
-	return *this;
-}
 
 Vector &Vector::operator*=(const float v) {
 	x *= v;
@@ -102,7 +92,7 @@ Vector &Vector::operator*=(const float v) {
 	return *this;
 }
 
-Vector Vector::operator%(const Vector &v) const {
+Vector Vector::operator%(const Vector &v) {
 	float uX = x;
 	float uY = y;
 	float uZ = z;
@@ -116,7 +106,4 @@ Vector Vector::operator%(const Vector &v) const {
 	float sZ = uX * vY - uY * vX;
 
 	return Vector(sX, sY, sZ);
-}
-Vector operator*(double f, const Vector &v) {
-	return v * f;
 }
