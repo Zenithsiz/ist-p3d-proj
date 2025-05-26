@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -41,7 +42,7 @@ Triangle::Triangle(Vector &P0, Vector &P1, Vector &P2) {
 	Max += EPSILON;
 }
 
-AABB Triangle::GetBoundingBox() {
+AABB Triangle::GetBoundingBox() const {
 	return (AABB(Min, Max));
 }
 
@@ -49,8 +50,7 @@ AABB Triangle::GetBoundingBox() {
 // Ray/Triangle intersection test using Tomas Moller-Ben Trumbore algorithm.
 //
 
-HitRecord Triangle::hit(Ray &r) {
-
+HitRecord Triangle::hit(Ray &r) const {
 	HitRecord rec;
 	rec.t = FLT_MAX;   // not necessary
 	rec.isHit = false; // not necessary
@@ -59,7 +59,34 @@ HitRecord Triangle::hit(Ray &r) {
 	Vector normal = (points[1] - points[0]) % (points[2] - points[1]); // cross product
 	normal.normalize();
 
-	// PUT HERE YOUR CODE
+	Vector edge1 = points[1] - points[0];
+	Vector edge2 = points[2] - points[0];
+	Vector ray_cross_e2 = r.direction % edge2;
+	float det = edge1 * ray_cross_e2;
+
+	float inv_det = 1.0 / det;
+	Vector s = r.origin - points[0];
+	float u = inv_det * (s * ray_cross_e2);
+
+	if ((u < 0 && abs(u) > EPSILON) || (u > 1 && abs(u - 1) > EPSILON)) {
+		return rec;
+	}
+
+	Vector s_cross_e1 = s % edge1;
+	float v = inv_det * r.direction * s_cross_e1;
+
+	if ((v < 0 && abs(v) > EPSILON) || (u + v > 1 && abs(u + v - 1) > EPSILON)) {
+		return rec;
+	}
+
+	// At this stage we can compute t to find out where the intersection point is on the line.
+	rec.t = inv_det * (edge2 * s_cross_e1);
+	rec.isHit = rec.t > EPSILON;
+
+	rec.normal = normal;
+	if (rec.normal * r.direction > 0) {
+		rec.normal = -rec.normal;
+	}
 
 	return (rec);
 }
@@ -82,7 +109,7 @@ Plane::Plane(Vector &P0, Vector &P1, Vector &P2) {
 // Ray/Plane intersection test.
 //
 
-HitRecord Plane::hit(Ray &r) {
+HitRecord Plane::hit(Ray &r) const {
 	HitRecord rec;
 	rec.t = FLT_MAX;
 	rec.isHit = false;
@@ -106,44 +133,141 @@ HitRecord Plane::hit(Ray &r) {
 	return (rec);
 }
 
-HitRecord Sphere::hit(Ray &r) {
+HitRecord Sphere::hit(Ray &r) const {
 	HitRecord rec;
 	rec.t = FLT_MAX;
 	rec.isHit = false;
 
-	// PUT HERE YOUR CODE
+	auto offset = r.origin - this->center;
+
+	auto b = offset * r.direction;
+	auto c = offset * offset - this->radius * this->radius;
+
+	auto is_outside = c > 0.0;
+
+	if (is_outside && b > 0.0) {
+		return rec;
+	}
+
+	auto disc = b * b - c;
+	if (disc < 0.0) {
+		return rec;
+	}
+
+	if (is_outside) {
+		rec.t = -b - sqrtf(disc);
+	} else {
+		rec.t = -b + sqrtf(disc);
+	}
+
+	auto hit_point = r.origin + r.direction * rec.t;
+	rec.normal = (hit_point - this->center).normalize();
+	rec.isHit = true;
 
 	return (rec);
 }
 
-AABB Sphere::GetBoundingBox() {
-	Vector a_min;
-	Vector a_max;
-
-	// PUT HERE YOUR CODE
+AABB Sphere::GetBoundingBox() const {
+	auto size = Vector(this->radius, this->radius, this->radius);
+	Vector a_min = this->center - size;
+	Vector a_max = this->center + size;
 
 	return (AABB(a_min, a_max));
 }
 
-aaBox::aaBox(Vector &minPoint, Vector &maxPoint) // Axis aligned Box: another geometric object
+aaBox::aaBox(const Vector &minPoint, const Vector &maxPoint) // Axis aligned Box: another geometric object
 {
 	this->min = minPoint;
 	this->max = maxPoint;
 }
 
-AABB aaBox::GetBoundingBox() {
+AABB aaBox::GetBoundingBox() const {
 	return (AABB(min, max));
 }
 
-HitRecord aaBox::hit(Ray &ray) {
+HitRecord aaBox::hit(Ray &ray) const {
 	HitRecord rec;
 	rec.t = FLT_MAX;
 	rec.isHit = false;
 
-	float t0, t1; // entering and leaving points
+	double ox = ray.origin.x;
+	double oy = ray.origin.y;
+	double oz = ray.origin.z;
 
-	// PUT HERE YOUR CODE
-	return (rec);
+	double dx = ray.direction.x;
+	double dy = ray.direction.y;
+	double dz = ray.direction.z;
+
+	double tx_min, ty_min, tz_min;
+	double tx_max, ty_max, tz_max;
+
+	double a = 1.0 / dx;
+	if (a >= 0) {
+		tx_min = (min.x - ox) * a;
+		tx_max = (max.x - ox) * a;
+	} else {
+		tx_min = (max.x - ox) * a;
+		tx_max = (min.x - ox) * a;
+	}
+
+	double b = 1.0 / dy;
+	if (b >= 0) {
+		ty_min = (min.y - oy) * b;
+		ty_max = (max.y - oy) * b;
+	} else {
+		ty_min = (max.y - oy) * b;
+		ty_max = (min.y - oy) * b;
+	}
+
+	double c = 1.0 / dz;
+	if (c >= 0) {
+		tz_min = (min.z - oz) * c;
+		tz_max = (max.z - oz) * c;
+	} else {
+		tz_min = (max.z - oz) * c;
+		tz_max = (min.z - oz) * c;
+	}
+
+	float tE, tL;             // entering and leaving t values
+	Vector face_in, face_out; // normals
+	// find largest tE, entering t value
+	if (tx_min > ty_min) {
+		tE = tx_min;
+		face_in = (a >= 0.0) ? Vector(-1, 0, 0) : Vector(1, 0, 0);
+	} else {
+		tE = ty_min;
+		face_in = (b >= 0.0) ? Vector(0, -1, 0) : Vector(0, 1, 0);
+	}
+	if (tz_min > tE) {
+		tE = tz_min;
+		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
+	}
+	// find smallest tL, leaving t value
+	if (tx_max < ty_max) {
+		tL = tx_max;
+		face_out = (a >= 0.0) ? Vector(1, 0, 0) : Vector(-1, 0, 0);
+	} else {
+		tL = ty_max;
+		face_out = (b >= 0.0) ? Vector(0, 1, 0) : Vector(0, -1, 0);
+	}
+	if (tz_max < tL) {
+		tL = tz_max;
+		face_out = (c >= 0.0) ? Vector(0, 0, 1) : Vector(0, 0, -1);
+	}
+	if (tE < tL && tL > 0) { // condition for a hit
+		rec.isHit = true;
+		if (tE > 0) {
+			rec.t = tE; // ray hits outside surface
+			rec.normal = face_in;
+		} else {
+			rec.t = tL; // ray hits inside surface
+			rec.normal = face_out;
+		}
+
+		return (rec);
+	} else {
+		return (rec); // initialized to false
+	}
 }
 
 Scene::Scene() {}
@@ -161,7 +285,7 @@ void Scene::addObject(Object *o) {
 }
 
 Object *Scene::getObject(unsigned int index) {
-	if (index >= 0 && index < objects.size()) {
+	if (index < objects.size()) {
 		return objects[index];
 	}
 	return NULL;
@@ -176,7 +300,7 @@ void Scene::addLight(Light *l) {
 }
 
 Light *Scene::getLight(unsigned int index) {
-	if (index >= 0 && index < lights.size()) {
+	if (index < lights.size()) {
 		return lights[index];
 	}
 	return NULL;
@@ -188,10 +312,12 @@ void Scene::LoadSkybox(const char *sky_dir) {
 	const char *maps[] = {"/right.jpg", "/left.jpg", "/top.jpg", "/bottom.jpg", "/front.jpg", "/back.jpg"};
 
 	for (int i = 0; i < 6; i++) {
-		strncpy(buffer, sky_dir, sizeof(buffer));
-		strncat(buffer, maps[i], sizeof(buffer));
-		filenames[i] = (char *)malloc(sizeof(buffer));
-		strncpy(filenames[i], buffer, sizeof(buffer));
+		strncpy(buffer, sky_dir, sizeof(buffer) - 1);
+		strncat(buffer, maps[i], sizeof(buffer) - strlen(buffer) - 1);
+
+		int filenames_len = sizeof(buffer);
+		filenames[i] = (char *)malloc(filenames_len);
+		strncpy(filenames[i], buffer, filenames_len);
 	}
 
 	ILuint ImageName;
@@ -234,7 +360,6 @@ void Scene::LoadSkybox(const char *sky_dir) {
 }
 
 Color Scene::GetSkyboxColor(Ray &r) {
-	float t_intersec;
 	Vector cubemap_coords; // To index the skybox
 
 	float ma;
@@ -299,10 +424,11 @@ Color Scene::GetSkyboxColor(Ray &r) {
 	height = skybox_img[img_side].resY;
 	bytesperpixel = skybox_img[img_side].BPP;
 
+	// TODO: These expressions weren't being assigned to, should we?
 	xp = int((width - 1) * s);
-	xp < 0 ? 0 : (xp > (width - 1) ? width - 1 : xp);
+	// xp < 0 ? 0 : (xp > (width - 1) ? width - 1 : xp);
 	yp = int((height - 1) * t);
-	yp < 0 ? 0 : (yp > (height - 1) ? height - 1 : yp);
+	// yp = yp < 0 ? 0 : (yp > (height - 1) ? height - 1 : yp);
 
 	float red = u8tofloat(skybox_img[img_side].img[(yp * width + xp) * bytesperpixel]);
 	float green = u8tofloat(skybox_img[img_side].img[(yp * width + xp) * bytesperpixel + 1]);
@@ -418,12 +544,12 @@ bool Scene::load_p3f(const char *name) {
 
 				file >> total_vertices >> total_faces;
 				verticesArray = (Vector *)malloc(total_vertices * sizeof(Vector));
-				for (int i = 0; i < total_vertices; i++) {
+				for (unsigned int i = 0; i < total_vertices; i++) {
 					file >> vertex;
 					verticesArray[i] = vertex;
 				}
 
-				for (int i = 0; i < total_faces; i++) {
+				for (unsigned int i = 0; i < total_faces; i++) {
 					file >> P0 >> P1 >> P2;
 					if (P0 > 0) {
 						P0 -= 1;

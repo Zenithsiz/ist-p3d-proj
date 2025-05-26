@@ -102,9 +102,11 @@ class Camera {
 	Ray PrimaryRay(const Vector &pixel_sample
 	) //  Rays cast from the Eye to a pixel sample which is in Viewport coordinates
 	{
-		Vector ray_dir;
+		auto df = (eye - at).length();
 
-		// PUT YOUR CODE HERE
+		Vector ray_dir = this->w * ((pixel_sample.x + 0.5f) / this->res_x - 0.5f) * this->u +
+		                 this->h * ((pixel_sample.y + 0.5f) / this->res_y - 0.5f) * this->v - df * this->n;
+		ray_dir.normalize();
 
 		return Ray(eye, ray_dir);
 	}
@@ -113,8 +115,20 @@ class Camera {
 		const Vector &lens_sample, const Vector &pixel_sample
 	) // DOF: Rays cast from  a thin lens sample to a pixel sample
 	{
-		Vector ray_dir;
-		Vector eye_offset;
+		float d = (eye - at).length();
+		float f = d * this->focal_ratio;
+
+		Vector p_s = Vector(
+			this->w * ((pixel_sample.x + 0.5f) / this->res_x - 0.5f),
+			this->h * ((pixel_sample.y + 0.5f) / this->res_y - 0.5f),
+			-d
+		);
+
+		Vector p = p_s * this->focal_ratio;
+
+		Vector eye_offset = eye + lens_sample.x * u + lens_sample.y * v;
+		Vector ray_dir = (p.x - lens_sample.x) * this->u + (p.y - lens_sample.y) * this->v - f * this->n;
+		ray_dir.normalize();
 
 		// PUT YOUR CODE HERE
 		return Ray(eye_offset, ray_dir);

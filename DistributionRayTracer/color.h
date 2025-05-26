@@ -44,8 +44,12 @@ class Color {
 		return Color(exp(R), exp(G), exp(B));
 	}
 
-	Color operator*(float c) {
+	Color operator*(float c) const {
 		return Color(R * c, G * c, B * c);
+	}
+
+	Color operator/(float c) const {
+		return Color(R / c, G / c, B / c);
 	}
 
 	Color operator*=(float c) {
@@ -55,15 +59,22 @@ class Color {
 		return *this;
 	}
 
-	Color operator+(Color c) {
+	Color operator/=(float c) {
+		R /= c;
+		G /= c;
+		B /= c;
+		return *this;
+	}
+
+	Color operator+(Color c) const {
 		return Color(R + c.R, G + c.G, B + c.B);
 	}
 
-	Color operator-(Color c) {
+	Color operator-(Color c) const {
 		return Color(R - c.R, G - c.G, B - c.B);
 	}
 
-	Color operator*(Color c) {
+	Color operator*(Color c) const {
 		return Color(R * c.R, G * c.G, B * c.B);
 	}
 
@@ -78,6 +89,13 @@ class Color {
 		R *= c.R;
 		G *= c.G;
 		B *= c.B;
+		return *this;
+	}
+
+	Color operator-() {
+		R = -R;
+		G = -G;
+		B = -B;
 		return *this;
 	}
 

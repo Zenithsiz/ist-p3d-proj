@@ -3,7 +3,7 @@
 
 Grid::Grid(void) {}
 
-int Grid::getNumObjects() {
+int Grid::getNumObjects() const {
 	return objects.size();
 }
 
@@ -15,8 +15,8 @@ void Grid::addObject(Object *o) {
 	objects.push_back(o);
 }
 
-Object *Grid::getObject(unsigned int index) {
-	if (index >= 0 && index < objects.size()) {
+Object *Grid::getObject(unsigned int index) const {
+	if (index < objects.size()) {
 		return objects[index];
 	}
 	return NULL;
@@ -24,12 +24,6 @@ Object *Grid::getObject(unsigned int index) {
 
 // ---------------------------------------------setup_cells
 void Grid::Build(vector<Object *> &objs) {
-
-	int xmin, xmax;
-	int ymin, ymax;
-	int zmin, zmax;
-	int index; // cell's array index
-
 	Vector min = Vector(FLT_MAX, FLT_MAX, FLT_MAX), max = Vector(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 
 	AABB grid_bbox = AABB(min, max);
@@ -123,7 +117,7 @@ bool Grid::Init_Traverse(
 	int &ix_stop,
 	int &iy_stop,
 	int &iz_stop
-) {
+) const {
 
 	float t0, t1; // entering and leaving points
 
@@ -265,7 +259,7 @@ bool Grid::Init_Traverse(
 }
 
 //-----------------------------------------------------------------------GRID TRAVERSAL
-bool Grid::Traverse(Ray &ray, Object **hitobject, HitRecord &hitRec) {
+bool Grid::Traverse(Ray &ray, const Object **hitobject, HitRecord &hitRec) const {
 	int ix, iy, iz;
 	double tx_next, ty_next, tz_next;
 	double dtx, dty, dtz;
@@ -351,7 +345,7 @@ bool Grid::Traverse(Ray &ray, Object **hitobject, HitRecord &hitRec) {
 }
 
 //-----------------------------------------------------------------------GRID TRAVERSAL FOR SHADOW RAY
-bool Grid::Traverse(Ray &ray) {
+bool Grid::Traverse(Ray &ray) const {
 
 	double length = ray.direction.length(); // distance between light and intersection point
 	ray.direction.normalize();

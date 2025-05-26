@@ -2,10 +2,8 @@
 #define ACCELERATOR_H
 
 #include "scene.h"
-#include <algorithm>
+#include "vector.h"
 #include <cmath>
-#include <queue>
-#include <stack>
 
 using namespace std;
 
@@ -13,13 +11,13 @@ class Grid {
   public:
 	Grid(void);
 	//~Grid(void);
-	int getNumObjects();
+	int getNumObjects() const;
 	void addObject(Object *o);
 	void setAABB(AABB &bbox_);
-	Object *getObject(unsigned int index);
+	Object *getObject(unsigned int index) const;
 	void Build(vector<Object *> &objs); // set up grid cells
-	bool Traverse(Ray &ray, Object **hitobject, HitRecord &hitRec);
-	bool Traverse(Ray &ray); // Traverse for shadow ray
+	bool Traverse(Ray &ray, const Object **hitobject, HitRecord &hitRec) const;
+	bool Traverse(Ray &ray) const; // Traverse for shadow ray
 
   private:
 	vector<Object *> objects;
@@ -46,21 +44,37 @@ class Grid {
 		int &ix_stop,
 		int &iy_stop,
 		int &iz_stop
-	);
+	) const;
 
 	AABB bbox;
 };
 
 /*********************************BVH*****************************************************************/
 class BVH {
+	struct BVHObj {
+		const Object *obj;
+		AABB bb;
+		Vector centroid;
+	};
+
 	class Comparator {
 	  public:
 		int dimension;
 
-		bool operator()(Object *a, Object *b) {
-			float ca = a->getCentroid().getAxisValue(dimension);
-			float cb = b->getCentroid().getAxisValue(dimension);
+		bool operator()(const BVHObj &a, const BVHObj &b) {
+			float ca = a.centroid.getAxisValue(dimension);
+			float cb = b.centroid.getAxisValue(dimension);
 			return ca < cb;
+		}
+	};
+
+	class SplitPred {
+	  public:
+		int dimension;
+		float aabb_centroid_center;
+
+		bool operator()(const BVHObj &obj) {
+			return obj.centroid.getAxisValue(this->dimension) < this->aabb_centroid_center;
 		}
 	};
 
@@ -77,40 +91,33 @@ class BVH {
 		void setAABB(AABB &bbox_);
 		void makeLeaf(unsigned int index_, unsigned int n_objs_);
 		void makeNode(unsigned int left_index_);
-		bool isLeaf() {
+		bool isLeaf() const {
 			return leaf;
 		}
-		unsigned int getIndex() {
+		unsigned int getIndex() const {
 			return index;
 		}
-		unsigned int getNObjs() {
+		unsigned int getNObjs() const {
 			return n_objs;
 		}
-		AABB &getAABB() {
+		const AABB &getAABB() const {
 			return bbox;
 		};
 	};
 
   private:
-	int Threshold = 2;
-	vector<Object *> objects;
-	vector<BVH::BVHNode *> nodes;
+	unsigned int Threshold = 2;
+	vector<BVHObj> objects;
 
-	struct StackItem {
-		BVHNode *ptr;
-		float t;
-		StackItem(BVHNode *_ptr, float _t) : ptr(_ptr), t(_t) {}
-	};
-
-	// stack<StackItem> hit_stack;  just declare it in the traverse procedure in order to be parallelized with OMP
+	vector<BVH::BVHNode> nodes;
 
   public:
 	BVH(void);
 	int getNumObjects();
 
 	void Build(vector<Object *> &objects);
-	void build_recursive(int left_index, int right_index, BVHNode *node);
-	bool Traverse(Ray &ray, Object **hit_obj, HitRecord &hitRec);
-	bool Traverse(Ray &ray);
+	void build_recursive(unsigned int left_index, unsigned int right_index, BVHNode &node);
+	bool Traverse(Ray &ray, const Object **hit_obj, HitRecord &hitRec) const;
+	bool Traverse(Ray &ray) const;
 };
 #endif
