@@ -55,10 +55,6 @@ HitRecord Triangle::hit(Ray &r) const {
 	rec.t = FLT_MAX;   // not necessary
 	rec.isHit = false; // not necessary
 
-	/* Calculate the normal */
-	Vector normal = (points[1] - points[0]) % (points[2] - points[1]); // cross product
-	normal.normalize();
-
 	Vector edge1 = points[1] - points[0];
 	Vector edge2 = points[2] - points[0];
 	Vector ray_cross_e2 = r.direction % edge2;
@@ -82,11 +78,8 @@ HitRecord Triangle::hit(Ray &r) const {
 	// At this stage we can compute t to find out where the intersection point is on the line.
 	rec.t = inv_det * (edge2 * s_cross_e1);
 	rec.isHit = rec.t > EPSILON;
-
-	rec.normal = normal;
-	if (rec.normal * r.direction > 0) {
-		rec.normal = -rec.normal;
-	}
+	rec.normal = (points[1] - points[0]) % (points[2] - points[1]);
+	rec.normal.normalize();
 
 	return (rec);
 }
