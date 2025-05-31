@@ -484,7 +484,6 @@ thread_local std::vector<Vector2> color_jitters;
 
 // Render function by primary ray casting from the eye towards the scene's objects
 void renderScene() {
-	unsigned int counter = 0;
 	set_rand_seed(time(NULL) * time(NULL)); // Use current time as seed for random generator
 
 	if (drawModeEnabled) {
@@ -640,9 +639,10 @@ void renderScene() {
 					colors[index_col + 1] = (float)color.g();
 					colors[index_col + 2] = (float)color.b();
 				} else {
-					img_Data[counter++] = u8fromfloat((float)color.r());
-					img_Data[counter++] = u8fromfloat((float)color.g());
-					img_Data[counter++] = u8fromfloat((float)color.b());
+					size_t pixel_idx = y * RES_X + x;
+					img_Data[3 * pixel_idx + 0] = u8fromfloat((float)color.r());
+					img_Data[3 * pixel_idx + 1] = u8fromfloat((float)color.g());
+					img_Data[3 * pixel_idx + 2] = u8fromfloat((float)color.b());
 				}
 			}
 		}
